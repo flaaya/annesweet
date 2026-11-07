@@ -15,3 +15,7 @@ img { max-width: 100%; display: block; }
 .tag { display: inline-block; margin-right: 4px; padding: 2px 8px; border-radius: 10px; background: #fce4ec; font-size: .8rem; }
 .custom-card { border: 1px dashed #c2185b; border-radius: 8px; padding: 16px; margin: 16px 0; }
 footer { padding-top: 16px; padding-bottom: 32px; border-top: 1px solid #ddd; }
+
+.hp { position: absolute; left: -9999px; }
+.error { color: #b00020; margin: 0.25rem 0 0; }
+.error:empty { display: none; }

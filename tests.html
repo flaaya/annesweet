@@ -80,6 +80,70 @@ test("MENU has 10 cakes and 4 pastries", () => {
   assertEqual(MENU.filter(i => i.category === "pastry").length, 4);
 });
 
+const today = new Date(2026, 10, 7); // Nov 7 2026, local time
+const ok = { name: "Maria", contact: "09171234567", fbName: "", items: [{ id: "a", name: "A", size: "6-inch", qty: 1 }],
+  custom: { occasion: "", size: "", flavor: "", message: "", design: "" },
+  fulfillment: "pickup", address: "", dateNeeded: "2026-11-10", notes: "", website: "" };
+const errOf = (patch, field) => validateOrder({ ...ok, ...patch }, today)[field];
+
+test("earliestDate is today + 3", () => assertEqual(earliestDate(today), "2026-11-10"));
+test("earliestDate crosses month end", () => assertEqual(earliestDate(new Date(2026, 10, 29)), "2026-12-02"));
+test("normalizePhone strips spaces and dashes", () => assertEqual(normalizePhone("0917 123-4567"), "09171234567"));
+test("valid order has no errors", () => assertEqual(Object.keys(validateOrder(ok, today)).length, 0));
+test("phone with spaces accepted", () => assertEqual(errOf({ contact: "0917 123 4567" }, "contact"), undefined));
+test("phone with dashes accepted", () => assertEqual(errOf({ contact: "0917-123-4567" }, "contact"), undefined));
+test("+63 phone accepted", () => assertEqual(errOf({ contact: "+639171234567" }, "contact"), undefined));
+test("short phone rejected", () => assertEqual(typeof errOf({ contact: "0917123" }, "contact"), "string"));
+test("missing name rejected", () => assertEqual(typeof errOf({ name: "   " }, "name"), "string"));
+test("name over 100 rejected", () => assertEqual(typeof errOf({ name: "x".repeat(101) }, "name"), "string"));
+test("fbName over 100 rejected", () => assertEqual(typeof errOf({ fbName: "x".repeat(101) }, "fbName"), "string"));
+test("no items and no custom rejected", () => assertEqual(typeof errOf({ items: [] }, "items"), "string"));
+test("custom cake only is accepted", () =>
+  assertEqual(errOf({ items: [], custom: { ...ok.custom, design: "unicorn" } }, "items"), undefined));
+test("custom field over 300 rejected", () =>
+  assertEqual(typeof errOf({ custom: { ...ok.custom, design: "x".repeat(301) } }, "custom"), "string"));
+test("date 2 days ahead rejected", () => assertEqual(typeof errOf({ dateNeeded: "2026-11-09" }, "dateNeeded"), "string"));
+test("missing date rejected", () => assertEqual(typeof errOf({ dateNeeded: "" }, "dateNeeded"), "string"));
+test("bad fulfillment rejected", () => assertEqual(typeof errOf({ fulfillment: "drone" }, "fulfillment"), "string"));
+test("delivery without address rejected", () =>
+  assertEqual(typeof errOf({ fulfillment: "delivery", address: " " }, "address"), "string"));
+test("delivery with address accepted", () =>
+  assertEqual(errOf({ fulfillment: "delivery", address: "1 Main St" }, "address"), undefined));
+test("pickup without address accepted", () => assertEqual(errOf({ address: "" }, "address"), undefined));
+test("qty 51 rejected", () =>
+  assertEqual(typeof errOf({ items: [{ id: "a", name: "A", size: "6-inch", qty: 51 }] }, "items"), "string"));
+test("fractional qty rejected", () =>
+  assertEqual(typeof errOf({ items: [{ id: "a", name: "A", size: "6-inch", qty: 1.5 }] }, "items"), "string"));
+test("notes over 500 rejected", () => assertEqual(typeof errOf({ notes: "x".repeat(501) }, "notes"), "string"));
+
+function linesFixture(menu) {
+  document.getElementById("lines-fixture")?.remove();
+  const c = document.createElement("div");
+  c.id = "lines-fixture";
+  c.innerHTML = '<div id="order-lines"></div>';
+  document.body.appendChild(c);
+  renderOrderLines(menu, c.firstChild);
+  return c;
+}
+const twoSizes = item("t", "cake", { sizes: [{ label: "6-inch", price: 1 }, { label: "8-inch", price: 2 }] });
+test("renderOrderLines skips sold out and makes one line per size", () => {
+  const c = linesFixture([twoSizes, item("s", "cake", { soldOut: true }), item("u", "pastry")]);
+  const ins = [...c.querySelectorAll("input")];
+  assertEqual(ins.map(i => i.dataset.id + "/" + i.dataset.size), ["t/6-inch", "t/8-inch", "u/Box"]);
+  assertEqual(ins.every(i => i.name === "qty" && i.type === "number" && i.min === "0" && i.max === "50" && i.value === "0"), true);
+});
+test("addToOrder sets 0 to 1", () => {
+  const c = linesFixture([twoSizes]);
+  addToOrder("t");
+  assertEqual(c.querySelector("input").value, "1");
+});
+test("addToOrder keeps an existing 3", () => {
+  const c = linesFixture([twoSizes]);
+  c.querySelector("input").value = "3";
+  addToOrder("t");
+  assertEqual(c.querySelector("input").value, "3");
+});
+
 runTests();
 </script>
 </body></html>

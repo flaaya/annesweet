@@ -52,7 +52,86 @@
       <li>Pick up or get it delivered</li>
     </ol>
   </section>
-  <section id="order"></section>
+  <section id="order">
+  <h2>Order form</h2>
+  <form id="order-form" novalidate>
+    <div class="field">
+      <label for="name">Your name</label>
+      <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required aria-describedby="err-name">
+      <p class="error" id="err-name"></p>
+    </div>
+    <div class="field">
+      <label for="contact">Mobile number</label>
+      <input id="contact" name="contact" type="tel" maxlength="30" autocomplete="tel" placeholder="0917 123 4567" required aria-describedby="err-contact">
+      <p class="error" id="err-contact"></p>
+    </div>
+    <div class="field">
+      <label for="fbName">Facebook name (optional)</label>
+      <input id="fbName" name="fbName" type="text" maxlength="100" aria-describedby="err-fbName">
+      <p class="error" id="err-fbName"></p>
+    </div>
+    <fieldset class="field">
+      <legend>Items</legend>
+      <div id="order-lines"></div>
+      <p class="error" id="err-items"></p>
+    </fieldset>
+    <fieldset class="field">
+      <legend>Custom cake (optional)</legend>
+    <div class="field">
+      <label for="occasion">Occasion</label>
+      <input id="occasion" name="occasion" type="text" maxlength="300" aria-describedby="err-occasion">
+      <p class="error" id="err-occasion"></p>
+    </div>
+    <div class="field">
+      <label for="customSize">Size or servings</label>
+      <input id="customSize" name="size" type="text" maxlength="300" aria-describedby="err-customSize">
+      <p class="error" id="err-customSize"></p>
+    </div>
+    <div class="field">
+      <label for="flavor">Flavor</label>
+      <input id="flavor" name="flavor" type="text" maxlength="300" aria-describedby="err-flavor">
+      <p class="error" id="err-flavor"></p>
+    </div>
+    <div class="field">
+      <label for="message">Message on cake</label>
+      <input id="message" name="message" type="text" maxlength="300" aria-describedby="err-message">
+      <p class="error" id="err-message"></p>
+    </div>
+    <div class="field">
+      <label for="design">Design description</label>
+      <textarea id="design" name="design" maxlength="300" rows="3" aria-describedby="err-design"></textarea>
+      <p class="error" id="err-design"></p>
+    </div>
+      <p class="error" id="err-custom"></p>
+    </fieldset>
+    <fieldset class="field">
+      <legend>Pickup or delivery</legend>
+      <label><input type="radio" name="fulfillment" value="pickup" checked> Pickup</label>
+      <label><input type="radio" name="fulfillment" value="delivery"> Delivery</label>
+      <p class="error" id="err-fulfillment"></p>
+    </fieldset>
+    <div id="address-field" hidden>
+      <p>Delivery is via Lalamove/Grab. The rider fee is paid by the customer.</p>
+    <div class="field">
+      <label for="address">Delivery address</label>
+      <textarea id="address" name="address" maxlength="300" rows="2" aria-describedby="err-address"></textarea>
+      <p class="error" id="err-address"></p>
+    </div>
+    </div>
+    <div class="field">
+      <label for="dateNeeded">Date needed</label>
+      <input id="dateNeeded" name="dateNeeded" type="date" required aria-describedby="err-dateNeeded">
+      <p class="error" id="err-dateNeeded"></p>
+    </div>
+    <div class="field">
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" name="notes" maxlength="500" rows="3" aria-describedby="err-notes"></textarea>
+      <p class="error" id="err-notes"></p>
+    </div>
+    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button type="submit" class="btn">Send order request</button>
+  </form>
+  </section>
 </main>
 <footer>
   <p>Contact: 09XX XXX XXXX</p>
