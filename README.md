@@ -7,7 +7,7 @@ A one-page bakery site. Customers pick items and send an order. The order lands 
 
 You do not need to know how to code. Follow the steps in order. Take your time.
 
-**Who owns what:** the bakery owner (Mom) should own the Google account that holds the Sheet, and the Telegram account that gets the alerts. Do steps 2 and 3 while signed in as her.
+**Who owns what:** the bakery owner (Mom) should own the Google account that holds the Sheet, and the Telegram account that gets the alerts. Do steps 1 and 2 while signed in as her.
 
 ## Before you start: things to swap before launch
 
@@ -15,16 +15,17 @@ Open each file in any text editor. Use "find" (Ctrl+F or Cmd+F) to locate the te
 
 | File | Look for | Change to |
 |---|---|---|
-| `script.js` | `APPS_SCRIPT_URL = ""` (top of file) | The web app URL from step 3 |
+| `script.js` | `APPS_SCRIPT_URL = ""` (top of file) | The web app URL from step 2 (item 8) |
 | `script.js` | `FACEBOOK_URL = "https://facebook.com/"` | The bakery's real Facebook page link. It is shown if an order fails to send, so it must match the footer link |
 | `index.html` | `Contact: 09XX XXX XXXX` (bottom, in the footer) | The real contact number |
 | `index.html` | `<a href="https://facebook.com/">Facebook</a>` (footer) | The same Facebook link as in `script.js` |
 | `index.html` | `Pickup area: to be announced` (footer) | The real pickup area |
 | `style.css` | `--brand: #c2185b;` (top of file) | The bakery's main color, as a hex code like `#c2185b` |
 | `menu.js` | Items whose names start with "Sample" | The real menu (see "Editing the menu" below) |
+| `index.html` | `photos/sample-chocolate-cake.svg` (the big picture at the top, in the `<img>`) | A real photo of the bakery's cakes, such as `photos/hero.jpg` |
 | `photos/` | Files named `sample-....svg` | Real photos |
 
-Photo tips: square, under about 200 KB each (shrink them free at squoosh.app), and shot the same way (same angle, plain background, daylight). Put them in `photos/` and point each menu item's `photo:` at the new file name.
+Photo tips: square, under about 200 KB each (shrink them free at squoosh.app), and shot the same way (same angle, plain background, daylight). Put them in `photos/` and point each menu item's `photo:` at the new file name. In each `photo:` line, change the `.svg` ending to the new `.jpg` file name (for example `photos/sample-ube-cake.svg` becomes `photos/ube-cake.jpg`).
 
 ## Step 1. Telegram bot (so Mom gets alerts)
 
@@ -88,14 +89,15 @@ Photo tips: square, under about 200 KB each (shrink them free at squoosh.app), a
 
 ## Step 5. Check that it works
 
-Open `tests.html` in a browser first. It should say **"N passed, 0 failed"** (N is a number, such as 46). If anything fails, stop and fix that before going on.
+Open `tests.html` in a browser first. It should say **"N passed, 0 failed"** (N is a number, such as 51). If anything fails, stop and fix that before going on.
 
 Then, on the live site address, test each of these:
 
 1. **A valid order.** Fill in everything and send. Expected: a new row in the Orders tab with Status "New", and a Telegram message to Mom in this style: `🎂 New order — Name, contact`, then the items, then `Pickup, Mon Nov 16` (day and date).
 2. **Notes `=1+1`.** Send an order with `=1+1` in Notes. Expected: the Sheet shows it as text, not as the number 2.
 3. **Spam trap.** Open the browser's developer tools (F12), fill in the hidden `website` field (`<input class="hp" name="website">`), and send. Expected: the site says success, but there is no new row and no Telegram message.
-4. **No internet.** Turn on airplane mode and send. Expected: a failure message that shows the Facebook link, and everything typed is still in the form.
+4. **A `+63` phone number.** Send an order with the contact `+63 917 123 4567`. Expected: the Sheet's Contact cell shows `09171234567` (no leading `'` or `+`), and the Telegram message shows the same number.
+5. **No internet.** Turn on airplane mode and send. Expected: a failure message that shows the Facebook link, and everything typed is still in the form.
 
 Then check on a **real Android phone and a real iPhone**:
 - The text is readable.

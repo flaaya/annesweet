@@ -80,14 +80,16 @@ test("MENU has 10 cakes and 4 pastries", () => {
   assertEqual(MENU.filter(i => i.category === "pastry").length, 4);
 });
 
-const today = new Date(2026, 10, 7); // Nov 7 2026, local time
+const today = new Date("2026-11-07T04:00:00Z"); // noon Nov 7 in Manila, whatever the browser's timezone
 const ok = { name: "Maria", contact: "09171234567", fbName: "", items: [{ id: "a", name: "A", size: "6-inch", qty: 1 }],
   custom: { occasion: "", size: "", flavor: "", message: "", design: "" },
   fulfillment: "pickup", address: "", dateNeeded: "2026-11-10", notes: "", website: "" };
 const errOf = (patch, field) => validateOrder({ ...ok, ...patch }, today)[field];
 
 test("earliestDate is today + 3", () => assertEqual(earliestDate(today), "2026-11-10"));
-test("earliestDate crosses month end", () => assertEqual(earliestDate(new Date(2026, 10, 29)), "2026-12-02"));
+test("earliestDate crosses month end", () => assertEqual(earliestDate(new Date("2026-11-29T04:00:00Z")), "2026-12-02"));
+test("earliestDate uses Manila date for a US-evening phone", () =>
+  assertEqual(earliestDate(new Date("2026-11-07T20:00:00-08:00")), "2026-11-11"));
 test("normalizePhone strips spaces and dashes", () => assertEqual(normalizePhone("0917 123-4567"), "09171234567"));
 test("valid order has no errors", () => assertEqual(Object.keys(validateOrder(ok, today)).length, 0));
 test("phone with spaces accepted", () => assertEqual(errOf({ contact: "0917 123 4567" }, "contact"), undefined));
@@ -172,6 +174,15 @@ test("collectOrder keeps only qty > 0 lines", () => {
   f.querySelector('input[name="qty"]').value = "0";
   assertEqual(collectOrder(f).items, []);
 });
+test("collectOrder drops a typed address when fulfillment is pickup", () => {
+  const f = formFixture({ address: "1 Main St" });
+  assertEqual(collectOrder(f).address, "");
+});
+test("showErrors returns true for an error with no focusable field", () => {
+  const f = formFixture();
+  assertEqual(showErrors(f, { bogus: "x" }), true);
+  assertEqual(showErrors(f, {}), false);
+});
 test("collectOrder trims and normalizes contact", () => {
   const f = formFixture({ name: "  Maria ", notes: " hi " });
   const o = collectOrder(f);
@@ -179,17 +190,22 @@ test("collectOrder trims and normalizes contact", () => {
 });
 const fetchReturning = body => async () => ({ json: async () => body });
 const withUrl = async fn => { APPS_SCRIPT_URL = "https://example.test/x"; try { await fn(); } finally { APPS_SCRIPT_URL = ""; } };
-test("submitOrder true on {ok:true}", () => withUrl(async () =>
-  assertEqual(await submitOrder(ok, fetchReturning({ ok: true })), true)));
-test("submitOrder false on {ok:false}", () => withUrl(async () =>
-  assertEqual(await submitOrder(ok, fetchReturning({ ok: false, error: "x" })), false)));
-test("submitOrder false on network error", () => withUrl(async () =>
-  assertEqual(await submitOrder(ok, async () => { throw new Error("offline"); }), false)));
-test("submitOrder false on unparseable response", () => withUrl(async () =>
-  assertEqual(await submitOrder(ok, async () => ({ json: async () => { throw new Error("bad"); } })), false)));
-test("submitOrder false and no fetch when APPS_SCRIPT_URL is empty", async () => {
+test("submitOrder ok on {ok:true}", () => withUrl(async () =>
+  assertEqual((await submitOrder(ok, fetchReturning({ ok: true }))).ok, true)));
+test("submitOrder not ok on {ok:false}, passing the server's error on", () => withUrl(async () =>
+  assertEqual(await submitOrder(ok, fetchReturning({ ok: false, error: "x" })), { ok: false, error: "x" })));
+test("submitOrder not ok on network error", () => withUrl(async () =>
+  assertEqual((await submitOrder(ok, async () => { throw new Error("offline"); })).ok, false)));
+test("submitOrder not ok on unparseable response", () => withUrl(async () =>
+  assertEqual((await submitOrder(ok, async () => ({ json: async () => { throw new Error("bad"); } }))).ok, false)));
+test("submitOrder sends an abort signal (timeout)", () => withUrl(async () => {
+  let signal;
+  await submitOrder(ok, async (u, opts) => { signal = opts.signal; return { json: async () => ({ ok: true }) }; });
+  assertEqual(signal instanceof AbortSignal, true);
+}));
+test("submitOrder not ok and no fetch when APPS_SCRIPT_URL is empty", async () => {
   let calls = 0;
-  assertEqual(await submitOrder(ok, async () => { calls++; return { json: async () => ({ ok: true }) }; }), false);
+  assertEqual((await submitOrder(ok, async () => { calls++; return { json: async () => ({ ok: true }) }; })).ok, false);
   assertEqual(calls, 0);
 });
 test("send button disabled while sending", () => withUrl(async () => {
@@ -222,12 +238,22 @@ test("failure shows alert and keeps fields; success replaces form", () => withUr
   await new Promise(r => setTimeout(r, 0));
   assertEqual(f.querySelector('[role="alert"]').textContent.startsWith("Couldn't send — please try again or message us on Facebook"), true);
   assertEqual(f.querySelector("button").disabled, false);
+  assertEqual(f.querySelector('[role="alert"] a').target, "_blank");
   assertEqual(f.querySelector("#name").value, "Maria");
+
   f = formFixture();
   initOrderForm(f, fetchReturning({ ok: true }));
   f.querySelector("button").click();
   await new Promise(r => setTimeout(r, 0));
   assertEqual(document.getElementById("form-fixture").textContent.includes("Thanks! Annesweet will message you to confirm your order and payment."), true);
+}));
+
+test("failure alert shows the server's reason", () => withUrl(async () => {
+  const f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: false, error: "Date must be at least 3 days ahead." }));
+  f.querySelector("button").click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(f.querySelector('[role="alert"]').textContent.includes("Date must be at least 3 days ahead."), true);
 }));
 
 runTests();

@@ -47,12 +47,10 @@ function renderMenu(menu, container) {
   fill("pastries", menu.filter(i => i.category === "pastry"));
 }
 
-const pad = n => String(n).padStart(2, "0");
-
-// Local date parts, never toISOString (it shifts by timezone)
+// Today in Manila (the server's clock, whatever the phone's timezone is) + 3 days, by UTC date math like Code.gs
 function earliestDate(today) {
-  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3);
-  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const [y, m, d] = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(today).split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + 3)).toISOString().slice(0, 10);
 }
 
 function normalizePhone(s) {
@@ -61,6 +59,7 @@ function normalizePhone(s) {
 
 function validateOrder(order, today) {
   const errors = {};
+  const earliest = earliestDate(today);
   const text = v => (v || "").trim();
   const tooLong = (v, max) => (v || "").length > max;
 
@@ -89,7 +88,7 @@ function validateOrder(order, today) {
   else if (tooLong(order.address, 300)) errors.address = "Address must be 300 characters or fewer.";
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(order.dateNeeded || "")) errors.dateNeeded = "Please pick the date you need it.";
-  else if (order.dateNeeded < earliestDate(today)) errors.dateNeeded = "Please pick " + earliestDate(today) + " or later (we need 3 days).";
+  else if (order.dateNeeded < earliest) errors.dateNeeded = "Please pick " + earliest + " or later (we need 3 days).";
 
   if (tooLong(order.notes, 500)) errors.notes = "Notes must be 500 characters or fewer.";
   return errors;
@@ -136,20 +135,23 @@ function collectOrder(form) {
   return {
     name: t("name"), contact: normalizePhone(t("contact")), fbName: t("fbName"), items,
     custom: { occasion: t("occasion"), size: t("size"), flavor: t("flavor"), message: t("message"), design: t("design") },
-    fulfillment: checked ? checked.value : "", address: t("address"), dateNeeded: f("dateNeeded").value,
+    fulfillment: checked ? checked.value : "", address: checked && checked.value === "delivery" ? t("address") : "", dateNeeded: f("dateNeeded").value,
     notes: t("notes"), website: f("website").value,
   };
 }
 
+// Resolves { ok, error }: error is the server's reason when it gave one
 async function submitOrder(order, fetchFn = fetch) {
-  if (!APPS_SCRIPT_URL) return false;
+  if (!APPS_SCRIPT_URL) return { ok: false };
   try {
     // text/plain keeps this a "simple" request, so Apps Script needs no CORS preflight
     const res = await fetchFn(APPS_SCRIPT_URL, {
-      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(order) });
-    return (await res.json()).ok === true;
+      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(order),
+      signal: AbortSignal.timeout(30000) });
+    const data = await res.json();
+    return { ok: data.ok === true, error: typeof data.error === "string" ? data.error : "" };
   } catch (e) {
-    return false;
+    return { ok: false };
   }
 }
 
@@ -175,7 +177,7 @@ function showErrors(form, errors) {
     first = first || target;
   });
   if (first) first.focus();
-  return !!first;
+  return Object.keys(errors).length > 0;
 }
 
 function initOrderForm(form, fetchFn = fetch) {
@@ -187,8 +189,11 @@ function initOrderForm(form, fetchFn = fetch) {
   fail.append("Couldn't send — please try again or message us on Facebook ");
   const link = document.createElement("a");
   link.href = FACEBOOK_URL;
+  link.target = "_blank";
+  link.rel = "noopener";
   link.textContent = "Facebook";
-  fail.append(link);
+  const reason = document.createElement("span");
+  fail.append(link, reason);
   button.before(fail);
   form.addEventListener("submit", async e => {
     e.preventDefault();
@@ -198,12 +203,14 @@ function initOrderForm(form, fetchFn = fetch) {
     if (showErrors(form, validateOrder(order, new Date()))) return;
     button.disabled = true;
     button.textContent = "Sending…";
-    if (await submitOrder(order, fetchFn)) {
+    const result = await submitOrder(order, fetchFn);
+    if (result.ok) {
       const done = document.createElement("p");
       done.setAttribute("role", "status");
       done.textContent = "Thanks! Annesweet will message you to confirm your order and payment.";
       form.replaceWith(done);
     } else {
+      reason.textContent = result.error ? " (" + result.error + ")" : "";
       fail.hidden = false;
       button.disabled = false;
       button.textContent = label;
@@ -225,7 +232,10 @@ if (document.getElementById("order-lines")) {
   const date = document.getElementById("dateNeeded");
   date.min = earliestDate(new Date());
   const address = document.getElementById("address-field");
-  document.querySelectorAll('input[name="fulfillment"]').forEach(r => r.addEventListener("change", () => {
-    address.hidden = document.querySelector('input[name="fulfillment"]:checked').value !== "delivery";
-  }));
+  const toggleAddress = () => {
+    const checked = document.querySelector('input[name="fulfillment"]:checked');
+    address.hidden = !checked || checked.value !== "delivery";
+  };
+  document.querySelectorAll('input[name="fulfillment"]').forEach(r => r.addEventListener("change", toggleAddress));
+  toggleAddress(); // a restored form may already have Delivery ticked
 }

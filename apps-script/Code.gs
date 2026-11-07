@@ -20,11 +20,11 @@ function validateOrder_(order, todayStr) {
   if (!order || typeof order !== "object") return ["Invalid order."];
   const errors = [];
   const notString = v => v != null && typeof v !== "string";
-  const c0 = order.custom && typeof order.custom === "object" ? order.custom : {};
-  const its = Array.isArray(order.items) ? order.items : [];
+  const c = order.custom && typeof order.custom === "object" ? order.custom : {};
+  const items = Array.isArray(order.items) ? order.items : [];
   // Optional text fields must really be strings, else length limits are bypassed
-  if ([order.fbName, order.address, order.notes].some(notString) || CUSTOM_KEYS.some(k => notString(c0[k])) ||
-      its.some(i => i && (notString(i.name) || notString(i.size)))) return ["Text fields must be strings."];
+  if ([order.fbName, order.address, order.notes].some(notString) || CUSTOM_KEYS.some(k => notString(c[k])) ||
+      items.some(i => i && (notString(i.name) || notString(i.size)))) return ["Text fields must be strings."];
   const str = v => (typeof v === "string" ? v : "");
   const tooLong = (v, max) => str(v).length > max;
 
@@ -34,11 +34,9 @@ function validateOrder_(order, todayStr) {
   if (!/^(09|\+639)\d{9}$/.test(str(order.contact).replace(/[\s-]/g, ""))) errors.push("Invalid mobile number.");
   if (tooLong(order.fbName, 100)) errors.push("Facebook name is too long.");
 
-  const c = order.custom && typeof order.custom === "object" ? order.custom : {};
   const hasCustom = CUSTOM_KEYS.some(k => str(c[k]).trim());
   if (CUSTOM_KEYS.some(k => tooLong(c[k], 300))) errors.push("A custom cake field is too long.");
 
-  const items = Array.isArray(order.items) ? order.items : [];
   if (items.some(i => !i || !Number.isInteger(i.qty) || i.qty < 0 || i.qty > 50)) errors.push("Quantity must be a whole number from 0 to 50.");
   else if (!items.some(i => i.qty > 0) && !hasCustom) errors.push("Choose at least one item or describe a custom cake.");
 
@@ -72,11 +70,16 @@ function customText_(order) {
     .map(k => k === "message" ? 'message "' + c[k] + '"' : k + " " + c[k]).join("; ");
 }
 
+// Stored as 09..., so the sheet never needs the formula-guard ' prefix on +63 numbers
+function localContact_(contact) {
+  return String(contact).replace(/[\s-]/g, "").replace(/^\+63/, "0");
+}
+
 function orderRow_(order, now) {
   return [
     now,
     safeCell_(order.name),
-    safeCell_(order.contact),
+    safeCell_(localContact_(order.contact)),
     safeCell_(order.fbName),
     safeCell_(itemsText_(order)),
     safeCell_(customText_(order)),
@@ -94,7 +97,7 @@ function formatTelegramMessage_(order) {
   const when = d ? DAYS[d.getUTCDay()] + " " + MONTHS[d.getUTCMonth()] + " " + d.getUTCDate() : order.dateNeeded;
   const delivery = order.fulfillment === "delivery";
   const lines = [
-    "🎂 New order — " + order.name + ", " + order.contact,
+    "🎂 New order — " + order.name + ", " + localContact_(order.contact),
     itemsText_(order),
     (delivery ? "Delivery" : "Pickup") + ", " + when,
   ];
@@ -201,6 +204,9 @@ function selfCheck() {
   assert(!bad({ fbName: null, notes: undefined }), "null/missing optionals ok");
   assert(safeCell_("=HYPERLINK(\"x\")") === "'=HYPERLINK(\"x\")", "formula escaped");
   assert(safeCell_("+639171234567") === "'+639171234567", "plus escaped");
+  assert(localContact_("+63 917-123 4567") === "09171234567" && localContact_("0917 123 4567") === "09171234567", "contact stored as 09...");
+  assert(orderRow_({ ...sample, contact: "+639171234567" }, now)[2] === "09171234567", "+63 contact stored as 09 in row");
+  assert(formatTelegramMessage_({ ...sample, contact: "+639171234567" }).includes("Maria Santos, 09171234567"), "+63 contact as 09 in message");
   assert(safeCell_("-1") === "'-1" && safeCell_("@a") === "'@a", "minus/at escaped");
   assert(safeCell_("Maria") === "Maria", "plain text unchanged");
   const row = orderRow_(sample, now);
