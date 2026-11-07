@@ -625,10 +625,15 @@ body.has-bar { padding-bottom: 80px; }
 }
 
 /* ---------- Legal pages ---------- */
-.prose { max-width: 65ch; padding-block: clamp(56px, 9vw, 112px) var(--section); }
+.prose { padding-block: clamp(56px, 9vw, 112px) var(--section); }
+.prose-head { max-width: 46em; margin-bottom: var(--s7); }
+/* The sections sit in cards in a grid, so wide screens have no empty right side and every row lines up (cards in a row share one height) */
+.prose-head h1 { margin-bottom: var(--s4); }
+.prose-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: var(--s5); }
+.prose-grid section { padding: var(--s5); background: var(--linen); }
 .prose h1 { font-size: clamp(46px, 6.6vw, 80px); }
-.prose .updated { margin: var(--s4) 0 var(--s7); color: var(--muted); font-size: var(--fs-small); }
-.prose h2 { margin: var(--s7) 0 var(--s3); font-size: 32px; font-weight: 400; letter-spacing: -.02em; line-height: 1.1; }
+.prose .updated { margin: var(--s4) 0 var(--s5); color: var(--muted); font-size: var(--fs-small); }
+.prose h2 { margin: 0 0 var(--s3); font-size: 30px; font-weight: 400; letter-spacing: -.02em; line-height: 1.1; }
 .prose p + p, .prose ul { margin-top: var(--s3); }
 .prose ul { padding-left: 1.2em; }
 .prose li + li { margin-top: var(--s1); }

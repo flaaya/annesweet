@@ -61,7 +61,7 @@ function safeCell_(value) {
 
 function itemsText_(order) {
   return (order.items || []).filter(i => i.qty > 0)
-    .map(i => i.qty + "× " + i.name + (i.size ? " (" + i.size + ")" : "")).join(", ");
+    .map(i => i.qty + "\u00d7 " + i.name + (i.size ? " (" + i.size + ")" : "")).join(", ");
 }
 
 function customText_(order) {
@@ -97,7 +97,7 @@ function formatTelegramMessage_(order) {
   const when = d ? DAYS[d.getUTCDay()] + " " + MONTHS[d.getUTCMonth()] + " " + d.getUTCDate() : order.dateNeeded;
   const delivery = order.fulfillment === "delivery";
   const lines = [
-    "🎂 New order — " + order.name + ", " + localContact_(order.contact),
+    "\uD83C\uDF82 New order \u2014 " + order.name + ", " + localContact_(order.contact),
     itemsText_(order),
     (delivery ? "Delivery" : "Pickup") + ", " + when,
   ];
@@ -306,11 +306,11 @@ function selfCheck() {
   assert(row.length === 11 && row[10] === "New", "row shape");
   assert(row[1] === "Maria Santos" && row[8] === "2026-11-15", "row fields");
   assert(orderRow_({ ...sample, name: "=1+1" }, now)[1] === "'=1+1", "row cells escaped");
-  assert(orderRow_(sample, now)[4] === "1× Chocolate Cake (8-inch), 6× Ensaymada", "items text");
+  assert(orderRow_(sample, now)[4] === "1\u00d7 Chocolate Cake (8-inch), 6\u00d7 Ensaymada", "items text");
   const msg = formatTelegramMessage_({ ...sample, notes: "R&D <b> *_" });
-  assert(msg.startsWith("🎂 New order — Maria Santos, 09171234567"), "header line");
+  assert(msg.startsWith("\uD83C\uDF82 New order \u2014 Maria Santos, 09171234567"), "header line");
   assert(msg.includes("R&D <b> *_"), "special chars kept raw");
-  assert(msg.includes("1× Chocolate Cake (8-inch), 6× Ensaymada"), "items line");
+  assert(msg.includes("1\u00d7 Chocolate Cake (8-inch), 6\u00d7 Ensaymada"), "items line");
   assert(msg.includes("Delivery, Sun Nov 15\n12 Rizal St, Manila"), "delivery line + address");
   assert(msg.includes("Custom: occasion Birthday; message \"Happy Birthday Lola\""), "custom line");
   assert(!formatTelegramMessage_({ ...sample, notes: "" }).includes("Notes:"), "empty notes omitted");
