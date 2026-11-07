@@ -1,0 +1,17 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.4; }
+main, footer { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+section { padding: 16px 0; }
+.topbar { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: #fff; border-bottom: 1px solid #ddd; z-index: 10; }
+.btn, .order-btn { display: inline-block; padding: 8px 14px; border: 0; border-radius: 6px; background: #c2185b; color: #fff; text-decoration: none; font: inherit; cursor: pointer; }
+img { max-width: 100%; display: block; }
+.hero img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 560px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 860px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+.card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+.card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.card.sold-out { opacity: .6; }
+.tag { display: inline-block; margin-right: 4px; padding: 2px 8px; border-radius: 10px; background: #fce4ec; font-size: .8rem; }
+.custom-card { border: 1px dashed #c2185b; border-radius: 8px; padding: 16px; margin: 16px 0; }
+footer { padding-top: 16px; padding-bottom: 32px; border-top: 1px solid #ddd; }

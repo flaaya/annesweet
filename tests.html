@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Annesweet tests</title></head>
+<body>
+<h1>Annesweet tests</h1>
+<ul id="failures"></ul>
+<script src="menu.js"></script>
+<script src="script.js"></script>
+<script>
+const tests = [];
+function test(name, fn) { tests.push({ name, fn }); }
+function assertEqual(actual, expected) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected))
+    throw new Error("expected " + JSON.stringify(expected) + " but got " + JSON.stringify(actual));
+}
+async function runTests() {
+  let passed = 0, failed = 0;
+  for (const t of tests) {
+    try { await t.fn(); passed++; }
+    catch (e) {
+      failed++;
+      const li = document.createElement("li");
+      li.textContent = t.name + ": " + e.message;
+      document.getElementById("failures").appendChild(li);
+    }
+  }
+  const p = document.createElement("p");
+  p.id = "summary";
+  p.textContent = passed + " passed, " + failed + " failed";
+  document.body.appendChild(p);
+}
+
+function fixture() {
+  const c = document.createElement("div");
+  c.innerHTML = '<div id="bestsellers"></div><div id="cakes"></div><div id="pastries"></div>';
+  return c;
+}
+const item = (id, category, extra) => Object.assign({
+  id, name: "Sample " + id, category, description: "d", photo: "photos/x.svg",
+  sizes: [{ label: "Box", price: 100 }], tags: [], soldOut: false }, extra);
+
+test("formatPrice single size", () =>
+  assertEqual(formatPrice({ sizes: [{ label: "Box of 6", price: 180 }] }), "₱180"));
+test("formatPrice multiple sizes uses From lowest", () =>
+  assertEqual(formatPrice({ sizes: [{ label: "8-inch", price: 950 }, { label: "6-inch", price: 650 }] }), "From ₱650"));
+test("formatPrice adds thousands comma", () =>
+  assertEqual(formatPrice({ sizes: [{ label: "x", price: 1250 }] }), "₱1,250"));
+test("renderMenu puts cakes and pastries in their sections", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake"), item("b", "cake"), item("c", "pastry")], c);
+  assertEqual(c.querySelectorAll("#cakes .card").length, 2);
+  assertEqual(c.querySelectorAll("#pastries .card").length, 1);
+});
+test("bestsellers row holds only Bestseller-tagged items", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { tags: ["Bestseller"] }), item("b", "cake"), item("c", "pastry", { tags: ["Bestseller"] })], c);
+  assertEqual(c.querySelectorAll("#bestsellers .card").length, 2);
+});
+test("sold out card has class sold-out and no Order this button", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { soldOut: true }), item("b", "cake")], c);
+  const cards = c.querySelectorAll("#cakes .card");
+  assertEqual(cards[0].classList.contains("sold-out"), true);
+  assertEqual(cards[0].querySelector("button"), null);
+  assertEqual(cards[1].querySelector("button").dataset.id, "b");
+});
+test("each card shows its tags as .tag elements", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { tags: ["Bestseller", "New"] })], c);
+  assertEqual([...c.querySelectorAll("#cakes .tag")].map(t => t.textContent), ["Bestseller", "New"]);
+});
+test("card text is not parsed as HTML", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { name: "<b>x</b>" })], c);
+  assertEqual(c.querySelector("#cakes .card b"), null);
+});
+test("MENU ids are unique", () =>
+  assertEqual(new Set(MENU.map(i => i.id)).size, MENU.length));
+test("MENU has 10 cakes and 4 pastries", () => {
+  assertEqual(MENU.filter(i => i.category === "cake").length, 10);
+  assertEqual(MENU.filter(i => i.category === "pastry").length, 4);
+});
+
+runTests();
+</script>
+</body></html>
