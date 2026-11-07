@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The menu · Annesweet</title>
+<meta name="description" content="Annesweet's cakes and pastries, baked to order. Order at least 3 days ahead.">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E0D13" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Figtree:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="menu.js" defer></script>
+<script src="script.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a href="index.html" class="topbar-mark">annesweet</a>
+    <nav aria-label="Main">
+      <a href="menu.html" aria-current="page"><span class="nav-label">Menu</span></a>
+      <a href="custom.html"><span class="nav-label">Custom cakes</span></a>
+      <a href="order.html"><span class="nav-label">Order</span><span class="nav-count" id="nav-count" hidden></span></a>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="page-head">
+    <div class="wrap">
+      <h1>The menu</h1>
+      <p class="lead">Everything is baked to order. Add what you'd like, then send your order request.</p>
+    </div>
+  </section>
+  <section id="menu" class="menu-part" aria-labelledby="h-cakes">
+    <div class="wrap">
+      <h2 id="h-cakes">Cakes</h2>
+      <div id="cakes" class="rows"></div>
+    </div>
+  </section>
+  <section class="menu-part" aria-labelledby="h-pastries">
+    <div class="wrap">
+      <h2 id="h-pastries">Pastries</h2>
+      <div id="pastries" class="rows"></div>
+    </div>
+  </section>
+  <section class="section surface closing" aria-labelledby="h-closing">
+    <div class="wrap">
+      <h2 id="h-closing">Order at least 3 days ahead</h2>
+      <p>Tell us what you'd like and the date you need it. No payment yet. We'll message you to confirm.</p>
+      <a href="order.html" class="btn">Order a cake</a>
+    </div>
+  </section>
+</main>
+<a href="order.html" class="order-bar" id="order-bar" hidden></a>
+<p id="add-status" class="visually-hidden" aria-live="polite"></p>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a href="index.html" class="footer-mark">annesweet</a>
+      <p>Cakes and pastries baked to order in our home kitchen.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="menu.html">Menu</a>
+      <a href="custom.html">Custom cakes</a>
+      <a href="order.html">Order request</a>
+    </nav>
+    <div class="footer-contact">
+      <p>Contact: 09XX XXX XXXX</p>
+      <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>
+      <p>Pickup area: to be announced</p>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <p>Please order at least 3 days ahead (a week for custom cakes).</p>
+    <p>Draft photos: Unsplash. To be replaced with Annesweet's own cakes.</p>
+  </div>
+</footer>
+</body>
+</html>

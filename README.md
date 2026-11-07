@@ -1,9 +1,20 @@
 # Annesweet website
 
-A one-page bakery site. Customers pick items and send an order. The order lands in a Google Sheet and a Telegram message pops up on the owner's phone.
+A small four-page bakery site. Customers pick items and send an order. The order lands in a Google Sheet and a Telegram message pops up on the owner's phone.
 
 - The website is plain files (HTML, CSS, JavaScript) hosted free on GitHub Pages.
 - The orders go to a small Google Apps Script (a tiny program that lives inside the Google Sheet).
+
+**The pages** (each is a complete file; the top bar and footer are copied into all four, so change them in every page):
+
+| Page | What's on it |
+|---|---|
+| `index.html` | Home: big photo and headline, the three most-ordered cakes, custom cakes, how ordering works |
+| `menu.html` | The full menu (cakes and pastries) with Add buttons |
+| `custom.html` | Custom cakes: what to tell us, and a button to the order form |
+| `order.html` | The order request form |
+
+The menu itself lives in `menu.js` (shown on Home and Menu, and as the item list in the order form). Items added with **Add** are remembered while the browser tab is open and appear in the form on `order.html`.
 
 You do not need to know how to code. Follow the steps in order. Take your time.
 
@@ -17,15 +28,21 @@ Open each file in any text editor. Use "find" (Ctrl+F or Cmd+F) to locate the te
 |---|---|---|
 | `script.js` | `APPS_SCRIPT_URL = ""` (top of file) | The web app URL from step 2 (item 8) |
 | `script.js` | `FACEBOOK_URL = "https://facebook.com/"` | The bakery's real Facebook page link. It is shown if an order fails to send, so it must match the footer link |
-| `index.html` | `Contact: 09XX XXX XXXX` (bottom, in the footer) | The real contact number |
-| `index.html` | `<a href="https://facebook.com/">Facebook</a>` (footer) | The same Facebook link as in `script.js` |
-| `index.html` | `Pickup area: to be announced` (footer) | The real pickup area |
-| `style.css` | `--brand: #c2185b;` (top of file) | The bakery's main color, as a hex code like `#c2185b` |
-| `menu.js` | Items whose names start with "Sample" | The real menu (see "Editing the menu" below) |
-| `index.html` | `photos/sample-chocolate-cake.svg` (the big picture at the top, in the `<img>`) | A real photo of the bakery's cakes, such as `photos/hero.jpg` |
-| `photos/` | Files named `sample-....svg` | Real photos |
+| All four pages | `Contact: 09XX XXX XXXX` (bottom, in the footer) | The real contact number |
+| All four pages | `<a href="https://facebook.com/" ...>Facebook</a>` (footer) | The same Facebook link as in `script.js` |
+| All four pages | `Pickup area: to be announced` (footer) | The real pickup area |
+| `menu.js` | Each item's `description` and prices | Check the wording and prices are right |
+| `photos/draft/` | Every `.jpg` | Real photos of Annesweet's cakes (see below) |
+| All four pages | `Draft photos: Unsplash. To be replaced with Annesweet's own cakes.` (footer) | Delete this line once the real photos are in |
 
-Photo tips: square for menu items (the big top picture is shown as a 4:3 landscape), under about 200 KB each (shrink them free at squoosh.app), and shot the same way (same angle, plain background, daylight). Put them in `photos/` and point each menu item's `photo:` at the new file name. In each `photo:` line, change the `.svg` ending to the new `.jpg` file name (for example `photos/sample-ube-cake.svg` becomes `photos/ube-cake.jpg`).
+The colors are set at the top of `style.css` (`--accent: #B8325A;` is the main pink).
+
+**Photos.** The pictures in `photos/draft/` are free stand-ins from Unsplash (listed in `photos/draft/SOURCES.txt`), not Annesweet's cakes. Replace each one with a real photo **using the same file name**, and nothing else needs changing:
+- `hero.jpg`: the big picture on Home (shown landscape on phones, square on computers)
+- one per menu item, named after the item's `id` (`chocolate-cake.jpg`, `ube-cake.jpg`, ... `cupcakes.jpg`)
+- `custom.jpg` (custom cakes), `kitchen.jpg` and `cake-box.jpg` (how ordering works)
+
+Photo tips: square (except the hero, about 4:3), under about 200 KB each (shrink them free at squoosh.app), no text on them, and shot the same way (same angle, plain light background, daylight). When they're all real, you can rename the folder from `photos/draft/` to `photos/`, but then every `photos/draft/` in `menu.js` and the four pages must change too, so it's simpler to leave it.
 
 ## Step 1. Telegram bot (so Mom gets alerts)
 
@@ -89,7 +106,7 @@ Photo tips: square for menu items (the big top picture is shown as a 4:3 landsca
 
 ## Step 5. Check that it works
 
-Open `tests.html` in a browser first. It should say **"N passed, 0 failed"** (N is a number, such as 51). If anything fails, stop and fix that before going on.
+Open `tests.html` in a browser first. It should say **"N passed, 0 failed"** (N is a number, such as 75). If anything fails, stop and fix that before going on.
 
 Then, on the live site address, test each of these:
 
@@ -103,20 +120,21 @@ Then check on a **real Android phone and a real iPhone**:
 - The text is readable.
 - The date picker will not let you choose today or the next 2 days.
 - The page does not zoom in when you tap a field.
-- Scroll down the page: the top bar stays visible.
+- Tap **Add** on the Menu page, then **Order** in the top bar: the item is already filled in on the form.
+- After a successful order, go back to the Menu: the bottom bar is gone (the saved items were cleared).
 
 ## Editing the menu day to day
 
 Open `menu.js`. Each item is one line like this:
 
 ```js
-{ id: "ube-cake", name: "Ube Cake", category: "cake", description: "...", photo: "photos/ube-cake.jpg", sizes: [{ label: "8-inch", price: 900 }], tags: ["Bestseller"], soldOut: false },
+{ id: "ube-cake", name: "Ube Cake", category: "cake", description: "...", photo: "photos/draft/ube-cake.jpg", sizes: [{ label: "8-inch", price: 900 }], tags: ["Bestseller"], soldOut: false },
 ```
 
 - **Sold out:** change `soldOut: false` to `soldOut: true`. Change it back when it's available again.
-- **Tags:** the little labels on a card, for example `tags: ["Bestseller"]` or `tags: ["New", "Bestseller"]`. Use `tags: []` for none.
+- **Tags:** the little labels on a card, for example `tags: ["Bestseller"]` or `tags: ["New", "Bestseller"]`. Use `tags: []` for none. Items tagged `"Bestseller"` are the ones shown on Home under "Most-ordered cakes" (three looks best).
 - **Add a size:** add another `{ label: "6-inch", price: 650 }` inside `sizes: [ ... ]`, separated by a comma.
-- **New item:** copy a whole line, give it a new unique `id`, and edit the rest. Add its photo to `photos/` first.
+- **New item:** copy a whole line, give it a new unique `id`, and edit the rest. Add its photo to `photos/draft/` first, named after the `id`.
 - Keep every comma, quote and bracket. If the menu disappears, a comma or quote went missing.
 
 Then save and publish: on GitHub, open the file, click the pencil, edit, and click **Commit changes** (or `git commit` and `git push` if you use the command line). GitHub Pages updates in a minute or two. Reload the page (hold Shift when you click reload) to see it.

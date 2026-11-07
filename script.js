@@ -21,8 +21,8 @@ function makeCard(item) {
   img.src = item.photo;
   img.alt = item.name;
   img.loading = "lazy";
-  img.width = 400;
-  img.height = 400;
+  img.width = 1000;
+  img.height = 1000;
   const body = el("div", "card-body");
   const tags = el("div", "tags");
   item.tags.forEach(t => tags.appendChild(el("span", "tag", t)));
@@ -46,6 +46,7 @@ function makeCard(item) {
 function renderMenu(menu, container) {
   const fill = (id, items) => {
     const box = container.querySelector("#" + id);
+    if (!box) return; // each page has only some of the lists
     box.textContent = "";
     items.forEach(i => box.appendChild(makeCard(i)));
   };
@@ -101,35 +102,120 @@ function validateOrder(order, today) {
   return errors;
 }
 
+// One line per size, grouped under Cakes / Pastries: photo, name, size and price, then − qty +
 function renderOrderLines(menu, container) {
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  };
   container.textContent = "";
-  menu.filter(i => !i.soldOut).forEach(item => item.sizes.forEach(size => {
-    const label = document.createElement("label");
-    label.className = "order-line";
-    const span = document.createElement("span");
-    span.textContent = item.name + " (" + size.label + ", ₱" + size.price.toLocaleString("en-US") + ")";
-    const input = document.createElement("input");
-    input.type = "number";
-    input.min = "0";
-    input.max = "50";
-    input.value = "0";
-    input.name = "qty";
-    input.dataset.id = item.id;
-    input.dataset.size = size.label;
-    input.setAttribute("aria-describedby", "err-items");
-    label.append(span, input);
-    container.appendChild(label);
-  }));
+  [["cake", "Cakes"], ["pastry", "Pastries"]].forEach(([category, title]) => {
+    const items = menu.filter(i => i.category === category && !i.soldOut);
+    if (!items.length) return;
+    const list = el("div", "lines");
+    items.forEach(item => item.sizes.forEach((size, n) => {
+      const line = el("div", "order-line");
+      const img = el("img");
+      img.src = item.photo;
+      img.alt = "";
+      img.loading = "lazy";
+      img.width = 1000;
+      img.height = 1000;
+      const input = el("input");
+      input.id = "qty-" + item.id + "-" + n;
+      input.type = "number";
+      input.min = "0";
+      input.max = "50";
+      input.value = "0";
+      input.name = "qty";
+      input.inputMode = "numeric";
+      input.dataset.id = item.id;
+      input.dataset.size = size.label;
+      input.setAttribute("aria-describedby", "err-items");
+      const label = el("label", "line-label");
+      label.htmlFor = input.id;
+      label.append(el("span", "line-name", item.name), el("span", "line-meta", size.label + " · ₱" + size.price.toLocaleString("en-US")));
+      const stepper = el("div", "stepper");
+      const step = (text, delta, what) => {
+        const b = el("button", "step", text);
+        b.type = "button";
+        b.setAttribute("aria-label", what + " " + item.name + ", " + size.label);
+        b.addEventListener("click", () => stepQty(input, delta));
+        return b;
+      };
+      stepper.append(step("−", -1, "One fewer"), input, step("+", 1, "One more"));
+      line.append(img, label, stepper);
+      list.appendChild(line);
+    }));
+    const group = el("div", "line-group");
+    group.append(el("h3", "", title), list);
+    container.appendChild(group);
+  });
+}
+
+// The − / + buttons: the number input stays the source of truth; clamp 0–50 and tell listeners
+function stepQty(input, delta) {
+  input.value = String(Math.min(50, Math.max(0, (parseInt(input.value, 10) || 0) + delta)));
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+// ---------- Cart: { "id|size": qty } in sessionStorage, so Add on Home/Menu reaches order.html ----------
+const CART_KEY = "annesweet-cart";
+const lineKey = (id, size) => id + "|" + size;
+function cartStorage() {
+  try { return window.sessionStorage; } catch (e) { return null; } // blocked storage: site still works, cart just doesn't carry over
+}
+function loadCart(storage) {
+  try {
+    const raw = JSON.parse(storage.getItem(CART_KEY) || "{}");
+    const cart = {};
+    Object.entries(raw && typeof raw === "object" ? raw : {}).forEach(([k, q]) => {
+      if (Number.isInteger(q) && q > 0 && q <= 50) cart[k] = q;
+    });
+    return cart;
+  } catch (e) { return {}; }
+}
+function saveCart(storage, cart) {
+  try { storage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) { /* storage blocked or full */ }
+}
+const cartCount = cart => Object.values(cart).reduce((n, q) => n + q, 0);
+// Same rule as the form: only raises the first size from 0 to 1
+function addToCart(cart, id, menu = MENU) {
+  const item = menu.find(m => m.id === id);
+  if (!item || item.soldOut) return cart;
+  const key = lineKey(id, item.sizes[0].label);
+  return cart[key] > 0 ? cart : { ...cart, [key]: 1 };
+}
+// Summary lines ({ id, name, size, qty }) from a cart, for pages without the form
+function cartLines(cart, menu = MENU) {
+  return Object.entries(cart).map(([key, qty]) => {
+    const [id, size] = key.split("|");
+    return { id, name: (menu.find(m => m.id === id) || {}).name || id, size, qty };
+  });
+}
+function cartFromForm(form) {
+  const cart = {};
+  orderSummary(form).forEach(l => { if (Number.isInteger(l.qty) && l.qty <= 50) cart[lineKey(l.id, l.size)] = l.qty; });
+  return cart;
+}
+function restoreCart(form, cart) {
+  form.querySelectorAll('input[name="qty"]').forEach(i => {
+    const q = cart[lineKey(i.dataset.id, i.dataset.size)];
+    if (q) i.value = String(q);
+  });
 }
 
 const isWide = () => matchMedia("(min-width: 960px)").matches;
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Only raises 0 to 1, so a quantity the customer already set is kept.
-// Wide screens jump to the line; phones stay put and let the bottom bar count it.
-function addToOrder(id, wide = isWide()) {
+// With the form on the page: set its line (wide screens jump to it). Otherwise: save it to the cart for order.html.
+function addToOrder(id, wide = isWide(), storage = cartStorage()) {
   const input = document.querySelector('#order-lines input[data-id="' + id + '"]');
-  if (!input) return;
+  if (!input) { saveCart(storage, addToCart(loadCart(storage), id)); return; }
   if (!(Number(input.value) > 0)) input.value = "1";
   if (!wide) return;
   input.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center" });
@@ -226,7 +312,7 @@ function showErrors(form, errors) {
   return Object.keys(errors).length > 0;
 }
 
-function initOrderForm(form, fetchFn = fetch) {
+function initOrderForm(form, fetchFn = fetch, storage = cartStorage()) {
   const button = form.querySelector('button[type="submit"]');
   const label = button.textContent;
   const fail = document.createElement("p");
@@ -256,7 +342,8 @@ function initOrderForm(form, fetchFn = fetch) {
       done.setAttribute("role", "status");
       done.textContent = "Thanks! Annesweet will message you to confirm your order and payment.";
       form.replaceWith(done);
-      updateOrderUI(); // sent: empty the summary, hide the bar
+      saveCart(storage, {}); // sent: empty the cart, the summary and the bar
+      updateOrderUI(undefined, storage);
     } else {
       reason.textContent = result.error ? " (" + result.error + ")" : "";
       fail.hidden = false;
@@ -266,22 +353,27 @@ function initOrderForm(form, fetchFn = fetch) {
   });
 }
 
-// tests.html has no page sections, so only wire up where they exist
-if (document.getElementById("cakes")) {
+// tests.html has no page sections, so only wire up what exists on this page
+if (document.querySelector("#bestsellers, #cakes")) {
   renderMenu(MENU, document);
   document.addEventListener("click", e => {
     const btn = e.target.closest(".order-btn");
     if (!btn) return;
-    const wide = isWide();
-    addToOrder(btn.dataset.id, wide);
-    if (!wide) markAdded(btn, document.getElementById("add-status"),
+    addToOrder(btn.dataset.id);
+    markAdded(btn, document.getElementById("add-status"),
       (MENU.find(m => m.id === btn.dataset.id) || {}).name || "item");
     updateOrderUI();
   });
 }
 if (document.getElementById("order-lines")) {
+  const form = document.getElementById("order-form");
   renderOrderLines(MENU, document.getElementById("order-lines"));
-  initOrderForm(document.getElementById("order-form"));
+  restoreCart(form, loadCart(cartStorage()));
+  form.addEventListener("input", e => {
+    if (e.target.name === "qty") saveCart(cartStorage(), cartFromForm(form));
+    updateOrderUI();
+  });
+  initOrderForm(form);
   const date = document.getElementById("dateNeeded");
   date.min = earliestDate(new Date());
   const address = document.getElementById("address-field");
@@ -293,24 +385,22 @@ if (document.getElementById("order-lines")) {
   toggleAddress(); // a restored form may already have Delivery ticked
 }
 
-// Summary (desktop) and bottom bar (phone); once sent the form is gone, which counts as nothing ordered
-let orderOnScreen = false, typing = false;
-function updateOrderUI(form = document.getElementById("order-form")) {
-  const list = document.getElementById("order-summary-lines");
-  const bar = document.getElementById("order-bar");
-  if (!list || !bar) return;
-  const lines = form && form.isConnected ? orderSummary(form) : [];
-  renderSummary(lines, list);
+// Desktop summary (order.html), phone bottom bar and the count by "Order" in the top bar (other pages).
+// Lines come from the form while it's on the page, else from the saved cart (emptied once sent).
+function updateOrderUI(form = document.getElementById("order-form"), storage = cartStorage()) {
+  const lines = form && form.isConnected ? orderSummary(form) : cartLines(loadCart(storage));
   const n = orderCount(lines);
+  const list = document.getElementById("order-summary-lines");
+  if (list) renderSummary(lines, list);
+  const count = document.getElementById("nav-count");
+  if (count) { count.textContent = n; count.hidden = !(n > 0); }
+  const bar = document.getElementById("order-bar");
+  if (!bar) return;
   bar.textContent = barLabel(n);
-  bar.hidden = barHidden(n, orderOnScreen, typing);
+  bar.hidden = barHidden(n, false, false); // the bar is left off order.html, so never over the form or keyboard
   document.body.classList.toggle("has-bar", !bar.hidden);
 }
-if (document.getElementById("order-bar")) {
-  document.getElementById("order-form").addEventListener("input", () => updateOrderUI());
-  document.addEventListener("focusin", e => { typing = e.target.matches("input, textarea, select"); updateOrderUI(); });
-  document.addEventListener("focusout", () => { typing = false; updateOrderUI(); });
-  new IntersectionObserver(([e]) => { orderOnScreen = e.isIntersecting; updateOrderUI(); })
-    .observe(document.getElementById("order"));
+if (document.querySelector(".topbar")) {
   updateOrderUI();
+  addEventListener("pageshow", () => updateOrderUI()); // coming Back from order.html restores this page from cache
 }

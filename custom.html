@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Custom cakes · Annesweet</title>
+<meta name="description" content="Custom cakes for birthdays, christenings and family celebrations. Please order a week ahead.">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E0D13" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Figtree:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="menu.js" defer></script>
+<script src="script.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a href="index.html" class="topbar-mark">annesweet</a>
+    <nav aria-label="Main">
+      <a href="menu.html"><span class="nav-label">Menu</span></a>
+      <a href="custom.html" aria-current="page"><span class="nav-label">Custom cakes</span></a>
+      <a href="order.html"><span class="nav-label">Order</span><span class="nav-count" id="nav-count" hidden></span></a>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="custom-page">
+    <div class="wrap">
+      <img class="photo" src="photos/draft/custom.jpg" alt="A tall pink cake decorated with glazed cherries and sprinkles on a white stand" width="1000" height="1000" fetchpriority="high">
+      <div class="custom-text">
+        <h1>Custom cakes for your celebration</h1>
+        <p class="lead">Tell us the occasion, the size and the look you have in mind, and we'll design it with you. Please order a week ahead.</p>
+        <h2>What to tell us</h2>
+        <ul class="points">
+          <li><strong>The occasion and the date.</strong> At least a week away.</li>
+          <li><strong>How many it should serve,</strong> or the size you want.</li>
+          <li><strong>The flavor.</strong> Any cake on our menu, or ask us.</li>
+          <li><strong>The look.</strong> Describe it, and send a reference photo when we message you.</li>
+        </ul>
+        <a href="order.html#custom-cake" class="btn">Describe your cake</a>
+      </div>
+    </div>
+  </section>
+</main>
+<a href="order.html" class="order-bar" id="order-bar" hidden></a>
+<p id="add-status" class="visually-hidden" aria-live="polite"></p>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a href="index.html" class="footer-mark">annesweet</a>
+      <p>Cakes and pastries baked to order in our home kitchen.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="menu.html">Menu</a>
+      <a href="custom.html">Custom cakes</a>
+      <a href="order.html">Order request</a>
+    </nav>
+    <div class="footer-contact">
+      <p>Contact: 09XX XXX XXXX</p>
+      <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>
+      <p>Pickup area: to be announced</p>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <p>Please order at least 3 days ahead (a week for custom cakes).</p>
+    <p>Draft photos: Unsplash. To be replaced with Annesweet's own cakes.</p>
+  </div>
+</footer>
+</body>
+</html>
