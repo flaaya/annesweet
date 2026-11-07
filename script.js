@@ -131,8 +131,8 @@ function renderMenu(menu, container) {
     items.forEach(i => box.appendChild(makeCard(i, opts)));
   };
   fill("bestsellers", menu.filter(i => i.tags.includes("Bestseller")), { picker: true, heart: true });
-  fill("cakes", menu.filter(i => i.category === "cake"));
-  fill("pastries", menu.filter(i => i.category === "pastry"));
+  fill("cakes", menu.filter(i => i.category === "cake"), { picker: true, heart: true });
+  fill("pastries", menu.filter(i => i.category === "pastry"), { heart: true });
 }
 
 // Today in Manila (the server's clock, whatever the phone's timezone is) + 3 days, by UTC date math like Code.gs
@@ -415,7 +415,7 @@ function initOrderForm(form, fetchFn = fetch, storage = cartStorage()) {
   link.textContent = "Facebook";
   const reason = document.createElement("span");
   fail.append(link, reason);
-  button.before(fail);
+  button.after(fail); // on wide screens it sits to the right of the button, on the same row
   form.addEventListener("submit", async e => {
     e.preventDefault();
     if (button.disabled) return;
@@ -479,12 +479,122 @@ function initOrderPage(form, storage = cartStorage()) {
     updateOrderUI(form, storage);
   });
 }
+// A calendar that looks like the rest of the site, in place of the browser's own date popup (which can't be styled).
+// The real <input type="date"> stays in the form (visually hidden) and keeps the value, so validation and sending don't change.
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function initDatePicker(input, minISO) {
+  input.min = minISO;
+  const pad = n => String(n).padStart(2, "0");
+  const isoOf = (y, m, d) => y + "-" + pad(m + 1) + "-" + pad(d);
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return { y, m: m - 1, d }; };
+  const long = s => { const p = parse(s); return new Date(Date.UTC(p.y, p.m, p.d)).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }); };
+  const wrap = document.createElement("div");
+  wrap.className = "date-field";
+  input.before(wrap);
+  wrap.appendChild(input);
+  input.classList.add("date-native");
+  input.tabIndex = -1;
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "date-trigger";
+  trigger.id = input.id + "-btn";
+  trigger.setAttribute("aria-haspopup", "dialog");
+  trigger.setAttribute("aria-expanded", "false");
+  if (input.getAttribute("aria-describedby")) trigger.setAttribute("aria-describedby", input.getAttribute("aria-describedby"));
+  const text = document.createElement("span");
+  trigger.append(text, Object.assign(document.createElement("span"), { className: "date-icon", innerHTML: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="4" y="6" width="16" height="14" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 10h16M8 4v4M16 4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' }));
+  const pop = document.createElement("div");
+  pop.className = "date-pop";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", "Choose a date");
+  pop.hidden = true;
+  wrap.append(trigger, pop);
+  const label = document.querySelector('label[for="' + input.id + '"]');
+  if (label) label.htmlFor = trigger.id;
+  input.addEventListener("focus", () => trigger.focus()); // an error on this field focuses the visible button
+  const showValue = () => { text.textContent = input.value ? long(input.value) : "Choose a date"; trigger.classList.toggle("is-empty", !input.value); };
+  let view = parse(minISO);
+  const render = focusISO => {
+    const min = parse(minISO);
+    const first = new Date(Date.UTC(view.y, view.m, 1)).getUTCDay();
+    const days = new Date(Date.UTC(view.y, view.m + 1, 0)).getUTCDate();
+    const atMin = view.y * 12 + view.m <= min.y * 12 + min.m;
+    pop.textContent = "";
+    const head = document.createElement("div");
+    head.className = "date-head";
+    const nav = (dir, glyph, name) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "date-nav"; b.textContent = glyph; b.setAttribute("aria-label", name);
+      b.disabled = dir < 0 && atMin;
+      b.addEventListener("click", () => { view = { y: view.y, m: view.m + dir, d: 1 }; if (view.m < 0) { view.m = 11; view.y--; } if (view.m > 11) { view.m = 0; view.y++; } render(); });
+      return b;
+    };
+    const title = document.createElement("p");
+    title.className = "date-title"; title.setAttribute("aria-live", "polite"); title.textContent = MONTHS[view.m] + " " + view.y;
+    head.append(nav(-1, "‹", "Previous month"), title, nav(1, "›", "Next month"));
+    const grid = document.createElement("div");
+    grid.className = "date-grid";
+    ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].forEach(n => grid.appendChild(Object.assign(document.createElement("span"), { className: "date-dow", textContent: n })));
+    for (let i = 0; i < first; i++) grid.appendChild(document.createElement("span"));
+    for (let d = 1; d <= days; d++) {
+      const iso = isoOf(view.y, view.m, d);
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "date-day"; b.textContent = d; b.dataset.date = iso;
+      b.setAttribute("aria-label", long(iso));
+      if (iso < minISO) b.disabled = true;
+      if (iso === input.value) { b.classList.add("is-selected"); b.setAttribute("aria-pressed", "true"); }
+      b.addEventListener("click", () => pick(iso));
+      grid.appendChild(b);
+    }
+    const note = document.createElement("p");
+    note.className = "date-note"; note.textContent = "Earliest date: " + long(minISO) + " (we need 3 days).";
+    pop.append(head, grid, note);
+    if (focusISO) { const t = grid.querySelector('[data-date="' + focusISO + '"]:not(:disabled)'); if (t) t.focus(); }
+  };
+  const open = () => {
+    view = parse(input.value || minISO);
+    render(input.value || minISO);
+    pop.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+  };
+  const close = refocus => {
+    if (pop.hidden) return;
+    pop.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    if (refocus) trigger.focus();
+  };
+  const pick = iso => {
+    input.value = iso;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    showValue();
+    close(true);
+  };
+  trigger.addEventListener("click", () => (pop.hidden ? open() : close(true)));
+  pop.addEventListener("keydown", e => {
+    if (e.key === "Escape") { e.stopPropagation(); close(true); return; }
+    const day = e.target.closest && e.target.closest(".date-day");
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+    if (!day || !step) return;
+    e.preventDefault();
+    const p = parse(day.dataset.date);
+    const t = new Date(Date.UTC(p.y, p.m, p.d + step));
+    const iso = isoOf(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate());
+    if (iso < minISO) return;
+    view = { y: t.getUTCFullYear(), m: t.getUTCMonth(), d: 1 };
+    render(iso);
+  });
+  // composedPath, not contains(): a click on the month arrows redraws the calendar, so the clicked button is already detached
+  document.addEventListener("click", e => { if (!e.composedPath().includes(wrap)) close(false); });
+  if (input.form) input.form.addEventListener("reset", () => setTimeout(showValue));
+  showValue();
+}
+
 if (document.getElementById("order-lines")) {
   const form = document.getElementById("order-form");
   initOrderPage(form);
   initOrderForm(form);
-  const date = document.getElementById("dateNeeded");
-  date.min = earliestDate(new Date());
+  initDatePicker(document.getElementById("dateNeeded"), earliestDate(new Date()));
   const address = document.getElementById("address-field");
   const toggleAddress = () => {
     const checked = document.querySelector('input[name="fulfillment"]:checked');
@@ -939,3 +1049,11 @@ function initMotion(root = document) {
   [...words, ...ups, ...photos].forEach(el => io.observe(el));
 }
 initMotion();
+
+// Text boxes grow with what is typed (no drag handle). Also re-measured when the form is reset.
+function autoGrow(box) {
+  box.style.height = "auto";
+  box.style.height = box.scrollHeight + 2 + "px"; // + the 1px borders
+}
+document.addEventListener("input", e => { if (e.target.matches && e.target.matches("textarea")) autoGrow(e.target); });
+document.addEventListener("reset", () => setTimeout(() => document.querySelectorAll("textarea").forEach(autoGrow)));

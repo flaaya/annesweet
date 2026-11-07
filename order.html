@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B120E" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Satisfy&display=swap">
 <link rel="icon" type="image/png" href="photos/favicon.png">
 <link rel="apple-touch-icon" href="photos/apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
@@ -19,25 +19,46 @@
 <body>
 <header class="topbar">
   <div class="wrap">
-    <a href="index.html" class="topbar-mark">AnneSweet</a>
+    <a href="index.html" class="topbar-mark"><img class="logo-mark" src="photos/logo.png" alt="" width="40" height="40"><span><span class="wm-anne">Anne</span><span class="wm-sweet">Sweet</span></span></a>
     <nav aria-label="Main">
+      <a href="index.html"><span class="nav-label">Home</span></a>
       <a href="menu.html"><span class="nav-label">Menu</span></a>
       <a href="custom.html"><span class="nav-label">Custom cakes</span></a>
       <a href="ideas.html"><span class="nav-label">Ideas</span></a>
-      <a href="order.html" aria-current="page"><span class="nav-label">Order</span><span class="nav-count" id="nav-count" hidden></span></a>
     </nav>
+    <div class="topbar-icons">
+      <button type="button" class="icon-btn" id="search-toggle" aria-label="Search the menu" aria-expanded="false" aria-controls="search-panel">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="wish-toggle" aria-label="Saved cakes, 0" aria-expanded="false" aria-controls="wish-panel">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span class="nav-count" id="wish-count" hidden></span>
+      </button>
+      <a href="order.html" class="icon-btn" id="cart-link" aria-label="Your order, 0 items">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M5 8h14l-1 12H6L5 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 10V7a3 3 0 0 1 6 0v3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="nav-count" id="nav-count" hidden></span>
+      </a>
+    </div>
+  </div>
+  <div class="topbar-panel" id="search-panel" role="search" hidden>
+    <label for="site-search">Search the menu</label>
+    <input type="search" id="site-search" autocomplete="off" placeholder="Ube, chocolate, cupcakes">
+    <p class="visually-hidden" id="search-status" aria-live="polite"></p>
+    <ul class="mini-list" id="search-results"></ul>
+  </div>
+  <div class="topbar-panel" id="wish-panel" hidden tabindex="-1" aria-labelledby="h-wish" role="region">
+    <h2 id="h-wish">Saved cakes</h2>
+    <ul class="mini-list" id="wish-list"></ul>
   </div>
 </header>
 <main>
-  <section class="page-head">
-    <div class="wrap">
-      <h1>Order request</h1>
-      <p class="lead">No payment yet. We'll message you to confirm.</p>
-    </div>
-  </section>
   <section id="order" class="order-page" aria-label="Order form">
     <div class="wrap">
   <form id="order-form" novalidate>
+    <div class="order-head">
+      <h1>Order request</h1>
+      <p class="lead">No payment yet. We'll message you to confirm.</p>
+    </div>
     <fieldset class="field items">
       <legend>Items</legend>
       <div id="order-lines"></div>
@@ -82,7 +103,7 @@
     </div>
     <div class="field">
       <label for="design">Design description</label>
-      <textarea id="design" name="design" maxlength="300" rows="3" aria-describedby="err-design"></textarea>
+      <textarea id="design" name="design" maxlength="300" rows="2" aria-describedby="err-design"></textarea>
       <p class="error" id="err-design"></p>
     </div>
       <p class="error" id="err-custom"></p>
@@ -108,7 +129,7 @@
     </div>
     <div class="field">
       <label for="notes">Notes (optional)</label>
-      <textarea id="notes" name="notes" maxlength="500" rows="3" aria-describedby="err-notes"></textarea>
+      <textarea id="notes" name="notes" maxlength="500" rows="2" aria-describedby="err-notes"></textarea>
       <p class="error" id="err-notes"></p>
     </div>
     <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -123,11 +144,11 @@
   </section>
 </main>
 <footer class="site-footer">
-  <div class="wrap footer-grid">
+  <div class="wrap footer-row">
     <div class="footer-brand">
-      <a href="index.html" class="footer-mark">AnneSweet</a>
+      <a href="index.html" class="footer-mark"><img class="logo-mark" src="photos/logo.png" alt="" width="40" height="40"><span><span class="wm-anne">Anne</span><span class="wm-sweet">Sweet</span></span></a>
       <p>Cakes and pastries baked to order in our home kitchen.</p>
-      <p class="footer-copy">© 2026 Annesweet. All rights reserved.</p>
+      <div class="legal footer-legal"><p>© 2026 Annesweet. All rights reserved.</p><p><a href="terms.html">Terms and conditions</a></p><p><a href="privacy.html">Privacy policy</a></p><p>Draft photos: Unsplash</p></div>
     </div>
     <nav aria-label="Footer">
       <a href="menu.html">Menu</a>
@@ -139,11 +160,7 @@
       <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>
       <p>Pickup area: to be announced</p>
     </div>
-  </div>
-  <div class="wrap footer-base">
-    <p>Please order at least 3 days ahead (a week for custom cakes).</p>
-    <p>Draft photos: Unsplash. To be replaced with Annesweet's own cakes.</p>
-    <div class="legal"><p><a href="terms.html">Terms and conditions</a></p><p><a href="privacy.html">Privacy policy</a></p></div>
+    <img class="footer-logo" src="photos/logo.png" alt="" width="96" height="96">
   </div>
 </footer>
 </body>

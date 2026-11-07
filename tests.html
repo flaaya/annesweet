@@ -159,6 +159,27 @@ const ok = { name: "Maria", contact: "09171234567", fbName: "", items: [{ id: "a
   fulfillment: "pickup", address: "", dateNeeded: "2026-11-10", notes: "", website: "" };
 const errOf = (patch, field) => validateOrder({ ...ok, ...patch }, today)[field];
 
+test("date picker: days before the earliest date are disabled, picking one sets the real input and closes", () => {
+  const form = document.createElement("form");
+  form.innerHTML = '<label for="dp">Date</label><input id="dp" type="date">';
+  document.body.appendChild(form);
+  const input = form.querySelector("input");
+  let events = 0;
+  input.addEventListener("input", () => events++);
+  initDatePicker(input, "2026-11-10");
+  const trigger = form.querySelector(".date-trigger");
+  trigger.click();
+  const day = iso => form.querySelector('[data-date="' + iso + '"]');
+  assertEqual([day("2026-11-09").disabled, day("2026-11-10").disabled, trigger.getAttribute("aria-expanded")], [true, false, "true"]);
+  form.querySelector('[aria-label="Next month"]').click(); // December, then January: the calendar must stay open
+  form.querySelector('[aria-label="Next month"]').click();
+  assertEqual([form.querySelector(".date-pop").hidden, form.querySelector(".date-title").textContent], [false, "January 2027"]);
+  form.querySelector('[aria-label="Previous month"]').click();
+  form.querySelector('[aria-label="Previous month"]').click();
+  day("2026-11-12").click();
+  assertEqual([input.value, events, form.querySelector(".date-pop").hidden, trigger.textContent.includes("Thursday, November 12, 2026")], ["2026-11-12", 1, true, true]);
+  form.remove();
+});
 test("earliestDate is today + 3", () => assertEqual(earliestDate(today), "2026-11-10"));
 test("earliestDate crosses month end", () => assertEqual(earliestDate(new Date("2026-11-29T04:00:00Z")), "2026-12-02"));
 test("earliestDate uses Manila date for a US-evening phone", () =>
@@ -350,9 +371,10 @@ test("markAdded shows Added, announces it, then settles on In your order", async
   assertEqual([btn.textContent, btn.classList.contains("in-cart"), btn.classList.contains("added"), btn.getAttribute("aria-label")],
     ["In your order", true, false, "Ube Cake in your order"]);
 });
-test("multi-size items get one Add button per size; single-size items get Add", () => {
+test("a card without the picker gets one Add button per size; single-size items get Add", () => {
   const c = fixture();
-  renderMenu([twoSizes, item("u", "pastry")], c);
+  c.querySelector("#cakes").appendChild(makeCard(twoSizes));
+  c.querySelector("#pastries").appendChild(makeCard(item("u", "pastry")));
   const b = [...c.querySelectorAll("#cakes .order-btn")];
   assertEqual(b.map(x => [x.textContent, x.dataset.id, x.dataset.size]), [["6-inch ₱1", "t", "6-inch"], ["8-inch ₱2", "t", "8-inch"]]);
   assertEqual(b[1].getAttribute("aria-label"), "Add t, 8-inch to your order");
@@ -361,7 +383,8 @@ test("multi-size items get one Add button per size; single-size items get Add", 
 });
 test("markCartButtons shows In your order for sizes in the cart and resets the rest", () => {
   const c = fixture();
-  renderMenu([twoSizes, item("u", "pastry")], c);
+  c.querySelector("#cakes").appendChild(makeCard(twoSizes));
+  c.querySelector("#pastries").appendChild(makeCard(item("u", "pastry")));
   markCartButtons(c, { "t|8-inch": 1, "u|Box": 2 });
   assertEqual([...c.querySelectorAll("#cakes .order-btn, #pastries .order-btn")].map(x => [x.textContent, x.classList.contains("in-cart")]),
     [["6-inch ₱1", false], ["8-inch in your order", true], ["In your order", true]]);
@@ -618,11 +641,11 @@ test("heart option adds a Save toggle on the photo", () => {
   const h = picked({ heart: true }).querySelector(".photo .wish-btn");
   assertEqual([h.type, h.dataset.wish, h.getAttribute("aria-label"), h.getAttribute("aria-pressed")], ["button", "t", "Save Choc", "false"]);
 });
-test("home bestsellers get the picker and hearts; menu lists don't", () => {
+test("home bestsellers and the menu lists all get the picker and hearts", () => {
   const c = fixture();
   renderMenu([twoSizes, item("b", "cake", { tags: ["Bestseller"], sizes: twoSizes.sizes })], c);
   assertEqual([c.querySelectorAll("#bestsellers .size-picker").length, c.querySelectorAll("#bestsellers .wish-btn").length,
-    c.querySelectorAll("#cakes .size-picker, #cakes .wish-btn").length], [1, 1, 0]);
+    c.querySelectorAll("#cakes .size-picker").length, c.querySelectorAll("#cakes .wish-btn").length], [1, 1, 2, 2]);
 });
 test("wishlist round-trips, keeps only known ids once, survives bad or blocked storage", () => {
   const s = fakeStorage();

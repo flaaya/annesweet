@@ -10,6 +10,8 @@
   --on-ink: #FFFFFF;        /* 19.0:1 on ink */
   --ink-hover: #4A1D18;     /* white on it 13.6:1 */
   --muted: #6B5A52;         /* 5.8:1 on paper, 6.3:1 on linen */
+  --wm-anne: #DB6A97;       /* pastel pink: soft on purpose, about 2.5:1 on the blush bar (it is the logo wordmark, not body text) */
+  --wm-sweet: #5E9AD6;      /* pastel blue, about 2.4:1 on the blush bar */
   --nav-hover: #A3274D;     /* nav link hover on the blush bar 5.1:1 */
   --blush: #F7D4DC;         /* "date." swatch and the nav count; ink on it 14.2:1 */
   --hair: rgba(41, 10, 8, .22);   /* resting underline (decorative) */
@@ -17,6 +19,7 @@
   --error: #9B1C1C;         /* 7.0:1 on paper */
 
   --serif-d: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+  --script: Satisfy, "Brush Script MT", cursive; /* the AnneSweet name */
   --serif-b: "Lora", "Source Serif Pro", Georgia, serif;
   --fs-display: clamp(46px, 8.4vw, 112px);
   --fs-h2: clamp(40px, 6.6vw, 80px);
@@ -41,6 +44,8 @@
     --ink-hover: #E4D9C2;   /* paper on it 13.0:1 */
     --muted: #C2B2A2;       /* 8.9:1 on paper, 7.8:1 on linen */
     --blush: #5C3640;       /* swatch behind parchment text 8.6:1 */
+    --wm-anne: #FFB3CE;
+    --wm-sweet: #A9D3FF;
     --nav-hover: #F7B8C9;   /* nav link hover on the plum bar 6:1 */
     --hair: rgba(246, 240, 225, .28);
     --field-line: rgba(246, 240, 225, .4); /* 3.4:1 on linen */
@@ -121,7 +126,7 @@ h1 em { font-style: italic; }
   column-gap: var(--s5); padding-block: var(--s3);
 }
 .topbar a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); text-decoration: none; }
-.topbar-mark { font: italic 400 32px/1 var(--serif-d); letter-spacing: -.02em; }
+.topbar-mark { font: 400 36px/1 var(--script); }
 .topbar nav { display: flex; gap: clamp(16px, 3vw, 40px); }
 .topbar nav a { font-weight: 500; font-size: var(--fs-body); }
 .topbar nav .nav-label { padding-bottom: 2px; }
@@ -173,31 +178,32 @@ h1 em { font-style: italic; }
 .page-home .wrap { max-width: none; }
 /* Top bar in its own colour: blush band, ink text; the counts flip to ink so they still show.
    Logo left, links truly centred (1fr auto 1fr), search / saved / order icons right. */
-.page-home .topbar { position: relative; z-index: 20; background: var(--blush); }
-.page-home .topbar .wrap {
+.topbar { --bar-h: 68px; position: relative; z-index: 20; background: var(--blush); }
+.topbar .wrap {
+  max-width: none; padding-inline: clamp(16px, 5vw, 96px);
   display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "logo icons" "nav nav";
   align-items: center; min-height: var(--bar-h); padding-block: var(--s2);
 }
-.page-home .topbar-mark { grid-area: logo; justify-self: start; gap: var(--s2); }
+.topbar-mark { grid-area: logo; justify-self: start; gap: var(--s2); }
 .logo-mark { width: 44px; height: 44px; flex: none; border-radius: 50%; }
 .topbar-mark .logo-mark { width: 52px; height: 52px; }
-.page-home .topbar nav { grid-area: nav; justify-content: center; }
+.topbar nav { grid-area: nav; justify-content: center; }
 .topbar-icons { grid-area: icons; display: flex; justify-self: end; margin-right: calc(-1 * var(--s2)); }
 .icon-btn {
   position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0;
   border: 0; border-radius: 0; background: transparent; color: var(--ink); cursor: pointer;
 }
-.page-home .topbar .icon-btn { display: inline-grid; }
+.topbar .icon-btn { display: inline-grid; }
 .icon-btn:hover, .icon-btn[aria-expanded="true"] { background: rgba(41, 10, 8, .08); }
 .icon-btn .nav-count { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; margin: 0; padding: 0 4px; font: 500 12px/1 var(--serif-b); }
-.page-home .nav-count { background: var(--ink); color: var(--on-ink); }
-.page-home .topbar .nav-label { --hair: rgba(41, 10, 8, .35); }
+.topbar .nav-count { background: var(--ink); color: var(--on-ink); }
+.topbar .nav-label { --hair: rgba(41, 10, 8, .35); }
 @media (prefers-color-scheme: dark) {
-  .page-home .topbar .nav-label { --hair: rgba(246, 240, 225, .4); }
+  .topbar .nav-label { --hair: rgba(246, 240, 225, .4); }
   .icon-btn:hover, .icon-btn[aria-expanded="true"] { background: rgba(246, 240, 225, .12); }
 }
 @media (min-width: 960px) {
-  .page-home .topbar .wrap { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "logo nav icons"; padding-block: var(--s3); }
+  .topbar .wrap { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "logo nav icons"; padding-block: var(--s3); }
 }
 /* Search and saved-cakes panels: a sheet under the bar (full width on phones, a column on the right on wide screens) */
 .topbar-panel {
@@ -413,20 +419,22 @@ img[data-photo="mocha-cake"] { transform: scale(1.1); object-position: 50% 40%; 
   .best .card:not(:first-child) h3 { font-size: clamp(32px, 3.4vw, 40px); }
 }
 
-/* Menu page: a cookbook "recipe index": linen-plated square photo, serif name, words, price */
-.rows { display: grid; gap: var(--s7); }
-.rows .card { display: grid; grid-template-columns: 112px minmax(0, 1fr); column-gap: var(--s5); row-gap: var(--s3); }
-.rows .card .photo { grid-row: 1 / 3; align-self: start; border: 8px solid var(--linen); }
-.rows .card h3 { font-size: clamp(28px, 3vw, 36px); }
-.rows .card-body { min-width: 0; }
-.rows .desc { max-width: 34em; }
-.rows .card-side { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s5); }
+/* Menu page: the same cards as the home page (big photo, name with the size toggle, price left and Add right), three across */
+.rows { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s7) clamp(24px, 3vw, 48px); }
+.rows .card { display: block; }
+.rows .photo { margin-bottom: var(--s4); }
+.rows h3 { font-size: clamp(28px, 2.4vw, 40px); }
+.rows .card-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); min-height: 46px; min-width: 0; }
+.rows .card-body .size-picker { order: 1; }
+.rows .desc, .rows .tags { flex-basis: 100%; margin-top: 0; }
+.rows .desc { order: 2; max-width: 34em; }
+.rows .tags { order: 3; }
+.rows .card-side { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); margin-top: var(--s2); }
+.rows .price { margin: 0; }
+.rows .card .actions { margin-left: 0; }
 .rows .sold-out-label { min-height: 44px; display: flex; align-items: center; }
-@media (min-width: 600px) {
-  .rows .card { grid-template-columns: 168px minmax(0, 1fr); column-gap: var(--s6); }
-  .rows .card .photo { border-width: 12px; }
-}
-@media (min-width: 1100px) { .rows { grid-template-columns: 1fr 1fr; column-gap: var(--s8); row-gap: 64px; } }
+@media (min-width: 600px) { .rows { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .rows { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 64px; } }
 
 /* ---------- Home: custom cakes (plate left, words right) ---------- */
 .band .wrap { display: grid; gap: var(--s6); align-items: center; }
@@ -483,7 +491,10 @@ img[data-photo="mocha-cake"] { transform: scale(1.1); object-position: 50% 40%; 
 }
 
 /* ---------- Order form + summary ---------- */
-.order-page { padding-top: var(--s7); padding-bottom: var(--section); }
+.order-page { padding-top: clamp(56px, 9vw, 112px); padding-bottom: var(--section); }
+/* The heading lives inside the form grid, so the "Your order" box can start level with it and Items sits right under the intro */
+.order-head h1 { margin-bottom: var(--s5); }
+.order-head { margin-bottom: var(--s5); }
 .order-summary { max-width: 560px; margin-top: var(--s7); padding: var(--s6); background: var(--linen); }
 @media (min-width: 960px) {
   #order-form { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: var(--s8); align-items: start; }
@@ -512,7 +523,7 @@ input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); out
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 input:hover, textarea:hover { border-color: var(--ink); }
 input[type="date"] { -webkit-appearance: none; appearance: none; }
-textarea { resize: vertical; }
+textarea { resize: none; overflow: hidden; } /* grows with the text instead (see autoGrow) */
 [aria-invalid="true"] { border-color: var(--error); box-shadow: inset 0 0 0 1px var(--error); }
 fieldset.field > label:has(input[type="radio"]) {
   display: flex; align-items: center; gap: var(--s3); min-height: 44px; margin: 0; font: 400 var(--fs-body)/1.5 var(--serif-b);
@@ -574,7 +585,7 @@ body.has-bar { padding-bottom: 80px; }
 /* ---------- Footer ---------- */
 .site-footer { padding-block: var(--s8) var(--s7); }
 .footer-grid { display: grid; gap: var(--s6); }
-.footer-mark { font: italic 400 28px/1 var(--serif-d); letter-spacing: -.02em; color: var(--ink); text-decoration: none; }
+.footer-mark { font: 400 32px/1 var(--script); color: var(--ink); text-decoration: none; }
 .footer-mark + p { margin-top: var(--s3); max-width: 28em; color: var(--muted); font-size: var(--fs-small); }
 .footer-grid nav, .footer-row nav, .footer-contact { display: flex; flex-direction: column; align-items: flex-start; font-weight: 500; }
 .footer-grid nav a, .footer-row nav a, .footer-contact p { min-height: 44px; display: flex; align-items: center; }
@@ -740,7 +751,7 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 .hero .actions .text-link { align-self: stretch; display: inline-flex; align-items: flex-end; padding-block: 0 6px; background-origin: border-box; background-clip: border-box; }
 
 /* Home top bar: 52px logo + 8px above and below = the 68px the hero's one-screen height is calculated from */
-.page-home .topbar .wrap { padding-block: 8px; }
+.topbar .wrap { padding-block: 8px; }
 
 /* Top bar: the wordmark sits a little further from the logo; on load the wordmark and nav links are wiped in from the left,
    one after another, the same direction as the button fill. The icons just fade in. */
@@ -770,3 +781,56 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 /* The Add buttons on the cake cards: no underline and no sliding fill, the box just fades to pink on hover */
 .order-btn:not(.cake-add):not(.in-cart) { background: transparent; transition: background-color .3s var(--ease), color .3s var(--ease); }
 .order-btn:not(.cake-add):not(.in-cart):hover, .order-btn:not(.cake-add):not(.in-cart):focus-visible { background-color: var(--blush); color: var(--ink); }
+
+/* Every page is full width like the home page, so the logo, the content and the footer share one left edge
+   (this also lets three menu cards fit with the name and the size toggle on one row) */
+.wrap { max-width: none; padding-inline: clamp(16px, 5vw, 96px); }
+
+/* Order form, compacted: fields sit side by side on wide screens instead of one long narrow column */
+@media (min-width: 960px) {
+  #order-form { grid-template-columns: repeat(6, minmax(0, 1fr)) 340px; column-gap: var(--s5); }
+  #order-form > * { grid-column: 1 / 7; }
+  #order-form > .order-summary { grid-column: 7; }
+  #order-form .field { max-width: none; margin-bottom: var(--s4); }
+  #order-form fieldset.field { margin-top: var(--s6); }
+  #order-form fieldset.items { margin-bottom: var(--s5); }
+  #order-form > .field:has(#name), #order-form > .field:has(#contact), #order-form > .field:has(#fbName) { grid-column: span 2; margin-top: var(--s5); }
+  #custom-cake { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--s5); }
+  #custom-cake > legend, #custom-cake > .error, #custom-cake > .field:has(#message), #custom-cake > .field:has(#design) { grid-column: 1 / -1; }
+  #order-form > fieldset.field:has(input[name="fulfillment"]) { grid-column: span 3; margin-top: var(--s6); }
+  #order-form > .field:has(#dateNeeded) { grid-column: span 3; margin-top: var(--s6); }
+  #order-form > .btn { grid-column: 1 / 4; width: 100%; max-width: 320px; }
+  #order-form > [role="alert"] { grid-column: 4 / 7; align-self: center; margin: var(--s5) 0 0; }
+}
+
+/* Date picker: the site's own calendar instead of the browser popup */
+.date-field { position: relative; }
+.date-native { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.date-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3); width: 100%; min-height: 48px; padding: 10px 14px;
+  border: 1px solid var(--field-line); border-radius: 0; background: var(--linen); color: var(--ink); cursor: pointer; text-align: left;
+  font: 400 var(--fs-body)/1.5 var(--serif-b); transition: border-color 200ms ease;
+}
+.date-trigger.is-empty { color: var(--muted); }
+.date-trigger:hover, .date-trigger[aria-expanded="true"] { border-color: var(--ink); }
+.date-trigger:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; border-color: var(--ink); }
+.date-field:has(.date-native[aria-invalid="true"]) .date-trigger { border-color: var(--error); box-shadow: inset 0 0 0 1px var(--error); }
+.date-icon { display: grid; color: var(--ink); }
+.date-pop { position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: min(360px, 100%); padding: var(--s4); border: 1px solid var(--ink); background: var(--paper); animation: panelIn .25s var(--ease); }
+.date-pop[hidden] { display: none; }
+.date-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s3); }
+.date-title { margin: 0; font: 400 24px/1.1 var(--serif-d); letter-spacing: -.01em; }
+.date-nav { width: 44px; height: 44px; border: 0; background: transparent; color: var(--ink); font: 400 28px/1 var(--serif-b); cursor: pointer; transition: background-color .3s var(--ease); }
+.date-nav:hover:not(:disabled), .date-nav:focus-visible { background: var(--blush); }
+.date-nav:disabled { color: var(--muted); opacity: .4; cursor: default; }
+.date-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.date-dow { padding-bottom: var(--s2); font: italic 400 16px/1.2 var(--serif-d); color: var(--muted); }
+.date-day { aspect-ratio: 1; min-height: 40px; border: 0; background: transparent; color: var(--ink); font: 400 var(--fs-body)/1 var(--serif-b); cursor: pointer; transition: background-color .3s var(--ease), color .3s var(--ease); }
+.date-day:hover:not(:disabled), .date-day:focus-visible { background: var(--blush); }
+.date-day:disabled { color: var(--muted); opacity: .45; cursor: default; }
+.date-day.is-selected, .date-day.is-selected:hover { background: var(--ink); color: var(--on-ink); }
+.date-note { margin: var(--s3) 0 0; color: var(--muted); font-size: var(--fs-small); }
+
+/* The name in two colours: Anne pink, Sweet blue */
+.wm-anne { color: var(--wm-anne); }
+.wm-sweet { color: var(--wm-sweet); }
