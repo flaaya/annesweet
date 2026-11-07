@@ -122,13 +122,27 @@ function renderOrderLines(menu, container) {
   }));
 }
 
-// Only raises 0 to 1, so a quantity the customer already set is kept
-function addToOrder(id) {
+const isWide = () => matchMedia("(min-width: 960px)").matches;
+const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Only raises 0 to 1, so a quantity the customer already set is kept.
+// Wide screens jump to the line; phones stay put and let the bottom bar count it.
+function addToOrder(id, wide = isWide()) {
   const input = document.querySelector('#order-lines input[data-id="' + id + '"]');
   if (!input) return;
   if (!(Number(input.value) > 0)) input.value = "1";
-  input.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (!wide) return;
+  input.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center" });
   input.focus({ preventScroll: true });
+}
+
+// Phone feedback for Add: "Added" on the button for 1.5s, announced through a live region
+function markAdded(btn, live, name) {
+  btn.textContent = "Added";
+  btn.classList.add("added");
+  if (live) live.textContent = "Added " + name + " to your order.";
+  clearTimeout(btn._addedTimer);
+  btn._addedTimer = setTimeout(() => { btn.textContent = "Add"; btn.classList.remove("added"); }, 1500);
 }
 
 // The qty > 0 lines of the form: [{ id, name, size, qty }] (also what collectOrder sends)
@@ -242,6 +256,7 @@ function initOrderForm(form, fetchFn = fetch) {
       done.setAttribute("role", "status");
       done.textContent = "Thanks! Annesweet will message you to confirm your order and payment.";
       form.replaceWith(done);
+      updateOrderUI(); // sent: empty the summary, hide the bar
     } else {
       reason.textContent = result.error ? " (" + result.error + ")" : "";
       fail.hidden = false;
@@ -256,7 +271,12 @@ if (document.getElementById("cakes")) {
   renderMenu(MENU, document);
   document.addEventListener("click", e => {
     const btn = e.target.closest(".order-btn");
-    if (btn) { addToOrder(btn.dataset.id); updateOrderUI(); }
+    if (!btn) return;
+    const wide = isWide();
+    addToOrder(btn.dataset.id, wide);
+    if (!wide) markAdded(btn, document.getElementById("add-status"),
+      (MENU.find(m => m.id === btn.dataset.id) || {}).name || "item");
+    updateOrderUI();
   });
 }
 if (document.getElementById("order-lines")) {
@@ -273,14 +293,13 @@ if (document.getElementById("order-lines")) {
   toggleAddress(); // a restored form may already have Delivery ticked
 }
 
-// Summary (desktop) and bottom bar (phone); a sent form is detached, which counts as nothing ordered
+// Summary (desktop) and bottom bar (phone); once sent the form is gone, which counts as nothing ordered
 let orderOnScreen = false, typing = false;
-function updateOrderUI() {
-  const form = document.getElementById("order-form");
+function updateOrderUI(form = document.getElementById("order-form")) {
   const list = document.getElementById("order-summary-lines");
   const bar = document.getElementById("order-bar");
-  if (!form || !list || !bar) return;
-  const lines = form.isConnected ? orderSummary(form) : [];
+  if (!list || !bar) return;
+  const lines = form && form.isConnected ? orderSummary(form) : [];
   renderSummary(lines, list);
   const n = orderCount(lines);
   bar.textContent = barLabel(n);
@@ -288,7 +307,7 @@ function updateOrderUI() {
   document.body.classList.toggle("has-bar", !bar.hidden);
 }
 if (document.getElementById("order-bar")) {
-  document.getElementById("order-form").addEventListener("input", updateOrderUI);
+  document.getElementById("order-form").addEventListener("input", () => updateOrderUI());
   document.addEventListener("focusin", e => { typing = e.target.matches("input, textarea, select"); updateOrderUI(); });
   document.addEventListener("focusout", () => { typing = false; updateOrderUI(); });
   new IntersectionObserver(([e]) => { orderOnScreen = e.isIntersecting; updateOrderUI(); })

@@ -140,6 +140,26 @@ test("addToOrder sets 0 to 1", () => {
   addToOrder("t");
   assertEqual(c.querySelector("input").value, "1");
 });
+test("addToOrder on a phone sets 1 but does not move focus", () => {
+  const c = linesFixture([twoSizes]);
+  const before = document.activeElement;
+  addToOrder("t", false);
+  assertEqual(c.querySelector("input").value, "1");
+  assertEqual(document.activeElement === before, true);
+});
+test("addToOrder on a wide screen focuses the line", () => {
+  const c = linesFixture([twoSizes]);
+  addToOrder("t", true);
+  assertEqual(document.activeElement === c.querySelector("input"), true);
+});
+test("markAdded shows Added, announces it, then reverts", async () => {
+  const btn = document.createElement("button"), live = document.createElement("p");
+  btn.textContent = "Add";
+  markAdded(btn, live, "Ube Cake");
+  assertEqual([btn.textContent, live.textContent], ["Added", "Added Ube Cake to your order."]);
+  await new Promise(r => setTimeout(r, 1600));
+  assertEqual(btn.textContent, "Add");
+});
 test("addToOrder keeps an existing 3", () => {
   const c = linesFixture([twoSizes]);
   c.querySelector("input").value = "3";
@@ -274,6 +294,23 @@ test("failure shows alert and keeps fields; success replaces form", () => withUr
   f.querySelector("button").click();
   await new Promise(r => setTimeout(r, 0));
   assertEqual(document.getElementById("form-fixture").textContent.includes("Thanks! Annesweet will message you to confirm your order and payment."), true);
+}));
+
+test("successful send empties the summary and hides the bar", () => withUrl(async () => {
+  const ui = document.createElement("div");
+  ui.innerHTML = '<ul id="order-summary-lines"></ul><a id="order-bar" hidden></a>';
+  document.body.appendChild(ui);
+  try {
+    const f = formFixture();
+    updateOrderUI(f);
+    assertEqual(document.querySelector("#order-summary-lines").textContent, "2 × t (Box)");
+    assertEqual(document.getElementById("order-bar").hidden, false);
+    initOrderForm(f, fetchReturning({ ok: true }));
+    f.querySelector("button").click();
+    await new Promise(r => setTimeout(r, 0));
+    assertEqual(document.querySelector("#order-summary-lines").textContent, "Nothing added yet.");
+    assertEqual(document.getElementById("order-bar").hidden, true);
+  } finally { ui.remove(); document.body.classList.remove("has-bar"); }
 }));
 
 test("failure alert shows the server's reason", () => withUrl(async () => {
