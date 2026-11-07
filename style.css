@@ -267,7 +267,7 @@ a.mini-item:hover .mini-name, a.mini-item:focus-visible .mini-name { text-decora
 .page-home .best .card:first-child .card-side,
 .page-home .best .card:not(:first-child) .card-side { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); margin-top: var(--s2); }
 .page-home .best .price { margin: 0; }
-.page-home .best .actions { margin-left: 0; margin-right: calc(-1 * var(--s3)); }
+.page-home .best .actions { margin-left: 0; margin-right: 0; } /* the Add box lines up with the photo and size boxes */
 /* Row 1: name left, size toggle right. Row 2 (card-side): price left, Add right */
 .page-home .best .card-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); min-height: 46px; /* the toggle's height, so names line up across cards */ }
 .page-home .section-head { align-items: center; }
@@ -767,11 +767,6 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 .text-link { transition: background-size 350ms ease, color .3s var(--ease); }
 .text-link:hover, .text-link:focus-visible { color: var(--nav-hover); }
 
-/* The Add buttons on the cake cards: no underline, just the pink fill from the left and the colour change on hover */
-.order-btn:not(.cake-add):not(.in-cart) {
-  background: linear-gradient(var(--blush), var(--blush)) right / 0 100% no-repeat;
-  transition: background-size 350ms ease, color .3s var(--ease);
-}
-.order-btn:not(.cake-add):not(.in-cart):hover, .order-btn:not(.cake-add):not(.in-cart):focus-visible {
-  background-position: left; background-size: 100% 100%; color: var(--ink);
-}
+/* The Add buttons on the cake cards: no underline and no sliding fill, the box just fades to pink on hover */
+.order-btn:not(.cake-add):not(.in-cart) { background: transparent; transition: background-color .3s var(--ease), color .3s var(--ease); }
+.order-btn:not(.cake-add):not(.in-cart):hover, .order-btn:not(.cake-add):not(.in-cart):focus-visible { background-color: var(--blush); color: var(--ink); }
