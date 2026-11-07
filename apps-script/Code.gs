@@ -125,6 +125,99 @@ function sendTelegram_(text) {
   if (res.getResponseCode() !== 200) throw new Error("Telegram HTTP " + res.getResponseCode());
 }
 
+// ---- Orders tab layout -------------------------------------------------------------------------------------------
+// Column A and row 1 stay empty (a white margin); the table starts at B2. "At a glance" counts sit to its right.
+const TABLE_COL = 2, HEADER_ROW = 2, FIRST_ROW = 3;
+const STATUSES = [["New", "#F7D4DC"], ["Confirmed", "#CFE3F8"], ["Baking", "#FFE9B8"], ["Ready", "#D6F0D0"], ["Done", "#E4E4E4"], ["Cancelled", "#F4C6BE"]];
+const INK = "#290A08", CREAM = "#FFFBF0", BLUSH = "#FCEFF2", LINE = "#EBCFD7";
+// Widths of: A (margin), B..L (the table), M (gap), N and O (the counts), P (margin)
+const COL_WIDTHS = [28, 158, 160, 128, 150, 300, 250, 118, 240, 118, 270, 118, 28, 150, 70, 28];
+
+// Writes one order into the table, below the last filled row of column B, and sizes the row to fit its text.
+function appendOrder_(sheet, values) {
+  const col = sheet.getRange(1, TABLE_COL, sheet.getMaxRows(), 1).getValues();
+  let last = HEADER_ROW;
+  for (let i = col.length - 1; i >= HEADER_ROW; i--) if (col[i][0] !== "") { last = i + 1; break; }
+  const row = last + 1;
+  if (row > sheet.getMaxRows()) sheet.insertRowAfter(sheet.getMaxRows());
+  sheet.getRange(row, TABLE_COL, 1, values.length).setValues([values]);
+  try {
+    sheet.autoResizeRows(row, 1);
+    if (sheet.getRowHeight(row) < 54) sheet.setRowHeight(row, 54);
+  } catch (err) { /* sizing is cosmetic */ }
+  return row;
+}
+
+// Makes the Orders tab easy on the eyes. Safe to run again any time: it replaces the old styling instead of stacking it.
+function formatOrdersSheet_(sheet) {
+  const n = HEADERS.length, lastCol = TABLE_COL + n - 1; // L
+  if (sheet.getMaxColumns() < COL_WIDTHS.length) sheet.insertColumnsAfter(sheet.getMaxColumns(), COL_WIDTHS.length - sheet.getMaxColumns());
+  const rows = Math.max(sheet.getMaxRows(), 60);
+  if (sheet.getMaxRows() < rows) sheet.insertRowsAfter(sheet.getMaxRows(), rows - sheet.getMaxRows());
+  const whole = sheet.getRange(1, 1, rows, COL_WIDTHS.length);
+  sheet.getBandings().forEach(b => b.remove());
+  whole.clearDataValidations().setBackground("#FFFFFF").setBorder(false, false, false, false, false, false);
+  whole.setFontFamily("Lora").setFontSize(11).setFontColor(INK).setVerticalAlignment("middle").setWrap(true);
+  sheet.setHiddenGridlines(true);
+  COL_WIDTHS.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+
+  // Header
+  const head = sheet.getRange(HEADER_ROW, TABLE_COL, 1, n);
+  head.setBackground(INK).setFontColor(CREAM).setFontWeight("bold").setFontSize(11).setHorizontalAlignment("left")
+    .setBorder(null, null, true, null, null, null, "#DB6A97", SpreadsheetApp.BorderStyle.SOLID_THICK);
+  sheet.setRowHeight(1, 28);
+  sheet.setRowHeight(HEADER_ROW, 46);
+
+  // Body: banded rows, hairlines, text aligned to the top-left, a comfortable minimum height
+  const body = sheet.getRange(FIRST_ROW, TABLE_COL, rows - HEADER_ROW, n);
+  body.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false).setFirstRowColor(CREAM).setSecondRowColor(BLUSH);
+  body.setVerticalAlignment("middle").setHorizontalAlignment("left")
+    .setBorder(null, null, true, null, null, true, LINE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setRowHeights(FIRST_ROW, rows - HEADER_ROW, 54);
+  sheet.getRange(FIRST_ROW, TABLE_COL, rows - HEADER_ROW, 1).setNumberFormat("ddd d mmm, h:mm AM/PM").setFontColor("#6B5A55");
+  sheet.getRange(FIRST_ROW, TABLE_COL + 1, rows - HEADER_ROW, n - 1).setNumberFormat("@"); // plain text keeps 0917... from becoming a number
+
+  // Status: a dropdown with a colour per step, centred
+  const status = sheet.getRange(FIRST_ROW, lastCol, rows - HEADER_ROW, 1);
+  status.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(STATUSES.map(s => s[0]), true).setAllowInvalid(true).build())
+    .setFontWeight("bold").setHorizontalAlignment("center");
+  sheet.setConditionalFormatRules(STATUSES.map(([name, color]) =>
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(name).setBackground(color).setFontColor(INK).setRanges([status]).build()));
+
+  // At a glance: counts to the right of the table
+  const gc = lastCol + 2; // N
+  const card = sheet.getRange(HEADER_ROW, gc, STATUSES.length + 2, 2);
+  card.setBackground(CREAM).setBorder(true, true, true, true, null, null, LINE, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(HEADER_ROW, gc, 1, 2).merge().setValue("AT A GLANCE").setBackground("#DB6A97").setFontColor("#FFFFFF")
+    .setFontWeight("bold").setHorizontalAlignment("center");
+  const col = String.fromCharCode(64 + lastCol); // "L"
+  const stats = [["All orders", "=COUNTA(" + String.fromCharCode(64 + TABLE_COL) + FIRST_ROW + ":" + String.fromCharCode(64 + TABLE_COL) + ")"]]
+    .concat(STATUSES.map(([name]) => [name, '=COUNTIF(' + col + FIRST_ROW + ":" + col + ', "' + name + '")']));
+  sheet.getRange(HEADER_ROW + 1, gc, stats.length, 1).setValues(stats.map(s => [s[0]])).setHorizontalAlignment("left");
+  sheet.getRange(HEADER_ROW + 1, gc + 1, stats.length, 1).setFormulas(stats.map(s => [s[1]])).setFontWeight("bold").setHorizontalAlignment("center").setNumberFormat("0");
+  sheet.getRange(HEADER_ROW + 1, gc, 1, 2).setFontSize(12).setFontWeight("bold");
+
+  sheet.setFrozenRows(HEADER_ROW);
+  sheet.setFrozenColumns(TABLE_COL + 1); // margin, time and name stay put when scrolling sideways
+  sheet.setTabColor("#DB6A97");
+}
+
+// Run this once from the Apps Script editor (pick "formatSheet" in the dropdown, then Run). It shifts an old table
+// (starting at A1) one column right and one row down, then styles everything.
+function formatSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
+  const atB2 = sheet.getRange(HEADER_ROW, TABLE_COL).getValue() === HEADERS[0];
+  if (!atB2 && sheet.getRange(1, 1).getValue() === HEADERS[0]) {
+    sheet.insertColumnBefore(1);
+    sheet.insertRowBefore(1);
+  } else if (!atB2) {
+    sheet.getRange(HEADER_ROW, TABLE_COL, 1, HEADERS.length).setNumberFormat("@").setValues([HEADERS]);
+  }
+  formatOrdersSheet_(sheet);
+}
+
 function doPost(e) {
   let order;
   try {
@@ -143,10 +236,10 @@ function doPost(e) {
     let sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
-    sheet.getRange("B:K").setNumberFormat("@"); // plain text keeps 0917... and "1/2" from being converted; A stays a date
-      sheet.appendRow(HEADERS);
+      sheet.getRange(HEADER_ROW, TABLE_COL, 1, HEADERS.length).setNumberFormat("@").setValues([HEADERS]);
+      formatOrdersSheet_(sheet);
     }
-    sheet.appendRow(orderRow_(order, new Date()));
+    appendOrder_(sheet, orderRow_(order, new Date()));
   } catch (err) {
     console.error("Sheet write failed: " + err.message);
     return json_({ ok: false, error: "Could not save order" });
