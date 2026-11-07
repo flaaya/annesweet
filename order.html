@@ -33,8 +33,13 @@
     </div>
   </section>
   <section id="order" class="order-page" aria-label="Order form">
-    <div class="wrap order-layout">
+    <div class="wrap">
   <form id="order-form" novalidate>
+    <fieldset class="field items">
+      <legend>Items</legend>
+      <div id="order-lines"></div>
+      <p class="error" id="err-items"></p>
+    </fieldset>
     <div class="field">
       <label for="name">Your name</label>
       <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required aria-describedby="err-name">
@@ -50,11 +55,6 @@
       <input id="fbName" name="fbName" type="text" maxlength="100" aria-describedby="err-fbName">
       <p class="error" id="err-fbName"></p>
     </div>
-    <fieldset class="field items">
-      <legend>Items</legend>
-      <div id="order-lines"></div>
-      <p class="error" id="err-items"></p>
-    </fieldset>
     <fieldset class="field" id="custom-cake" aria-describedby="err-custom">
       <legend>Custom cake (optional)</legend>
     <div class="field">
@@ -109,13 +109,13 @@
       <p class="error" id="err-notes"></p>
     </div>
     <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <aside class="order-summary" aria-labelledby="h-summary">
+      <h2 id="h-summary">Your order</h2>
+      <ul id="order-summary-lines"></ul>
+      <p class="summary-note">Prices are confirmed by message.</p>
+    </aside>
     <button type="submit" class="btn">Send order request</button>
   </form>
-  <aside class="order-summary" aria-labelledby="h-summary">
-    <h2 id="h-summary">Your order</h2>
-    <ul id="order-summary-lines"></ul>
-    <p class="summary-note">Prices are confirmed by message.</p>
-  </aside>
     </div>
   </section>
 </main>

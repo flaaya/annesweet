@@ -147,15 +147,23 @@ test("renderOrderLines skips sold out and makes one line per size", () => {
 });
 test("renderOrderLines groups lines under Cakes and Pastries, each labelled with a photo", () => {
   const c = linesFixture([twoSizes, item("u", "pastry")]);
-  assertEqual([...c.querySelectorAll(".line-group h3")].map(h => h.textContent), ["Cakes", "Pastries"]);
+  assertEqual(c.querySelectorAll(".line-group h3, .line-group h2").length, 0); // no heading skip under the h1
+  assertEqual([...c.querySelectorAll(".line-group .line-head")].map(h => h.textContent), ["Cakes", "Pastries"]);
   assertEqual([...c.querySelectorAll(".line-group")].map(g => g.querySelectorAll("input").length), [2, 1]);
   const line = c.querySelector(".order-line");
   assertEqual(line.querySelector("label").htmlFor, line.querySelector("input").id);
-  assertEqual(line.querySelector("img").alt, "");
+  assertEqual(line.closest(".order-item").querySelector("img").alt, "");
+});
+test("renderOrderLines shows each item once, with one sub-row per size", () => {
+  const c = linesFixture([twoSizes, item("u", "pastry")]);
+  const rows = [...c.querySelectorAll(".order-item")];
+  assertEqual(rows.map(r => [r.querySelector(".item-name").textContent, r.querySelectorAll(".order-line").length]), [["t", 2], ["u", 1]]);
+  assertEqual(rows[0].querySelectorAll("img").length, 1);
+  assertEqual(rows[0].querySelector(".order-line label").textContent, "t, 6-inch · ₱1");
 });
 test("renderOrderLines leaves out a category with nothing available", () => {
   const c = linesFixture([item("u", "pastry")]);
-  assertEqual([...c.querySelectorAll(".line-group h3")].map(h => h.textContent), ["Pastries"]);
+  assertEqual([...c.querySelectorAll(".line-group .line-head")].map(h => h.textContent), ["Pastries"]);
 });
 test("stepQty clamps 0 to 50 and fires input and change", () => {
   const i = document.createElement("input");
@@ -208,6 +216,13 @@ test("addToCart raises the first size 0 to 1, keeps a set quantity, ignores sold
 });
 test("cartLines turns the cart into named summary lines", () =>
   assertEqual(cartLines({ "t|8-inch": 2 }, [twoSizes]), [{ id: "t", name: "t", size: "8-inch", qty: 2 }]));
+test("cartLines drops stale entries: unknown item, unknown size, sold out", () =>
+  assertEqual(cartLines({ "gone|x": 1, "t|10-inch": 1, "s|Box": 2, "t|6-inch": 1 }, [twoSizes, item("s", "cake", { soldOut: true })]),
+    [{ id: "t", name: "t", size: "6-inch", qty: 1 }]));
+test("addToCart takes a size, falling back to the first for an unknown one", () => {
+  assertEqual(addToCart({}, "t", [twoSizes], "8-inch"), { "t|8-inch": 1 });
+  assertEqual(addToCart({}, "t", [twoSizes], "12-inch"), { "t|6-inch": 1 });
+});
 test("restoreCart fills saved quantities and cartFromForm reads them back", () => {
   const c = linesFixture([twoSizes, item("u", "pastry")]);
   restoreCart(c, { "t|8-inch": 4, "gone|x": 1 });
@@ -220,6 +235,31 @@ test("addToOrder with no form on the page saves to the cart", () => {
   addToOrder("ube-cake", true, s);
   addToOrder("ube-cake", false, s);
   assertEqual(loadCart(s), { "ube-cake|8-inch": 1 });
+});
+test("addToOrder with a size saves that size", () => {
+  document.getElementById("lines-fixture")?.remove();
+  const s = fakeStorage();
+  addToOrder("chocolate-cake", false, s, "8-inch");
+  assertEqual(loadCart(s), { "chocolate-cake|8-inch": 1 });
+});
+test("order page: restores the saved cart on load and saves each quantity change", () => {
+  document.getElementById("page-fixture")?.remove();
+  const c = document.createElement("div");
+  c.id = "page-fixture";
+  c.innerHTML = '<form><div id="order-lines"></div></form>';
+  document.body.appendChild(c);
+  try {
+    const s = fakeStorage();
+    saveCart(s, { "ube-cake|8-inch": 3, "chocolate-cake|8-inch": 1 });
+    const form = c.firstChild;
+    initOrderPage(form, s);
+    const qty = (id, size) => form.querySelector('input[data-id="' + id + '"][data-size="' + size + '"]');
+    assertEqual([qty("ube-cake", "8-inch").value, qty("chocolate-cake", "8-inch").value, qty("chocolate-cake", "6-inch").value], ["3", "1", "0"]);
+    qty("ube-cake", "8-inch").parentNode.querySelector(".step:last-child").click();
+    qty("chocolate-cake", "8-inch").value = "0";
+    qty("chocolate-cake", "8-inch").dispatchEvent(new Event("input", { bubbles: true }));
+    assertEqual(loadCart(s), { "ube-cake|8-inch": 4 });
+  } finally { c.remove(); }
 });
 test("addToOrder sets 0 to 1", () => {
   const c = linesFixture([twoSizes]);
@@ -238,13 +278,32 @@ test("addToOrder on a wide screen focuses the line", () => {
   addToOrder("t", true);
   assertEqual(document.activeElement === c.querySelector("input"), true);
 });
-test("markAdded shows Added, announces it, then reverts", async () => {
+test("markAdded shows Added, announces it, then settles on In your order", async () => {
   const btn = document.createElement("button"), live = document.createElement("p");
-  btn.textContent = "Add";
+  btn.textContent = btn.dataset.label = "Add";
   markAdded(btn, live, "Ube Cake");
   assertEqual([btn.textContent, live.textContent], ["Added", "Added Ube Cake to your order."]);
   await new Promise(r => setTimeout(r, 1600));
-  assertEqual(btn.textContent, "Add");
+  assertEqual([btn.textContent, btn.classList.contains("in-cart"), btn.classList.contains("added")], ["In your order", true, false]);
+});
+test("multi-size items get one Add button per size; single-size items get Add", () => {
+  const c = fixture();
+  renderMenu([twoSizes, item("u", "pastry")], c);
+  const b = [...c.querySelectorAll("#cakes .order-btn")];
+  assertEqual(b.map(x => [x.textContent, x.dataset.id, x.dataset.size]), [["6-inch ₱1", "t", "6-inch"], ["8-inch ₱2", "t", "8-inch"]]);
+  assertEqual(b[1].getAttribute("aria-label"), "Add t, 8-inch to your order");
+  const u = c.querySelector("#pastries .order-btn");
+  assertEqual([u.textContent, u.dataset.size], ["Add", "Box"]);
+});
+test("markCartButtons shows In your order for sizes in the cart and resets the rest", () => {
+  const c = fixture();
+  renderMenu([twoSizes, item("u", "pastry")], c);
+  markCartButtons(c, { "t|8-inch": 1, "u|Box": 2 });
+  assertEqual([...c.querySelectorAll("#cakes .order-btn, #pastries .order-btn")].map(x => [x.textContent, x.classList.contains("in-cart")]),
+    [["6-inch ₱1", false], ["8-inch in your order", true], ["In your order", true]]);
+  markCartButtons(c, {});
+  assertEqual(c.querySelectorAll(".in-cart").length, 0);
+  assertEqual(c.querySelector("#pastries .order-btn").textContent, "Add");
 });
 test("addToOrder keeps an existing 3", () => {
   const c = linesFixture([twoSizes]);
@@ -424,7 +483,7 @@ test("off the order page, the bar counts the saved cart", () => {
   try {
     updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"ube-cake|8-inch":2,"brownies|Box of 6":1}' }));
     assertEqual([document.getElementById("order-bar").hidden, document.getElementById("order-bar").textContent,
-      document.getElementById("nav-count").textContent], [false, "3 items · Review order", "3"]);
+      document.getElementById("nav-count").textContent], [false, "3 items · Review order", "3 items in your order"]);
     updateOrderUI(null, fakeStorage());
     assertEqual([document.getElementById("order-bar").hidden, document.getElementById("nav-count").hidden], [true, true]);
   } finally { ui.remove(); document.body.classList.remove("has-bar"); }

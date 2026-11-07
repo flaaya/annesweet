@@ -16,13 +16,10 @@ function makeCard(item) {
     return e;
   };
   // Row: photo · name, description, tags · price and Add (bestsellers restyle the same markup)
-  const card = el("article", "card" + (item.soldOut ? " sold-out" : ""));
-  const img = el("img");
-  img.src = item.photo;
-  img.alt = item.name;
-  img.loading = "lazy";
-  img.width = 1000;
-  img.height = 1000;
+  const multi = item.sizes.length > 1;
+  const card = el("article", "card" + (item.soldOut ? " sold-out" : "") + (multi ? " multi" : ""));
+  const photo = el("div", "photo");
+  photo.appendChild(productImg(item, item.name));
   const body = el("div", "card-body");
   const tags = el("div", "tags");
   item.tags.forEach(t => tags.appendChild(el("span", "tag", t)));
@@ -33,14 +30,45 @@ function makeCard(item) {
   if (item.soldOut) {
     side.appendChild(el("p", "sold-out-label", "Sold out"));
   } else {
-    const btn = el("button", "order-btn", "Add");
-    btn.type = "button";
-    btn.dataset.id = item.id;
-    btn.setAttribute("aria-label", "Add " + item.name + " to your order");
-    side.appendChild(btn);
+    // One button per size ("6-inch ₱650"), or just "Add" when there's only one
+    const actions = el("div", "actions");
+    item.sizes.forEach(size => {
+      const label = multi ? size.label + " ₱" + size.price.toLocaleString("en-US") : "Add";
+      const btn = el("button", "order-btn", label);
+      btn.type = "button";
+      btn.dataset.id = item.id;
+      btn.dataset.size = size.label;
+      btn.dataset.label = label;
+      btn.setAttribute("aria-label", "Add " + item.name + (multi ? ", " + size.label : "") + " to your order");
+      actions.appendChild(btn);
+    });
+    side.appendChild(actions);
   }
-  card.append(img, body, side);
+  card.append(photo, body, side);
   return card;
+}
+
+// Square product photo; the id lets style.css re-frame stand-in photos whose cake sits small or low
+function productImg(item, alt) {
+  const img = document.createElement("img");
+  img.src = item.photo;
+  img.alt = alt;
+  img.loading = "lazy";
+  img.width = 1000;
+  img.height = 1000;
+  img.dataset.photo = item.id;
+  return img;
+}
+
+// "In your order" state for Add buttons whose id|size is in the cart (skips one still showing "Added")
+const inCartLabel = btn => btn.dataset.label === "Add" ? "In your order" : btn.dataset.size + " in your order";
+function setInCart(btn, on) {
+  btn.classList.toggle("in-cart", on);
+  btn.textContent = on ? inCartLabel(btn) : btn.dataset.label;
+}
+function markCartButtons(container, cart) {
+  container.querySelectorAll(".order-btn:not(.added)").forEach(btn =>
+    setInCart(btn, cart[lineKey(btn.dataset.id, btn.dataset.size)] > 0));
 }
 
 function renderMenu(menu, container) {
@@ -102,7 +130,8 @@ function validateOrder(order, today) {
   return errors;
 }
 
-// One line per size, grouped under Cakes / Pastries: photo, name, size and price, then − qty +
+// One row per item (photo and name once), with a sub-row per size: "6-inch · ₱650  − qty +".
+// Grouped under Cakes / Pastries.
 function renderOrderLines(menu, container) {
   const el = (tag, cls, text) => {
     const e = document.createElement(tag);
@@ -115,42 +144,44 @@ function renderOrderLines(menu, container) {
     const items = menu.filter(i => i.category === category && !i.soldOut);
     if (!items.length) return;
     const list = el("div", "lines");
-    items.forEach(item => item.sizes.forEach((size, n) => {
-      const line = el("div", "order-line");
-      const img = el("img");
-      img.src = item.photo;
-      img.alt = "";
-      img.loading = "lazy";
-      img.width = 1000;
-      img.height = 1000;
-      const input = el("input");
-      input.id = "qty-" + item.id + "-" + n;
-      input.type = "number";
-      input.min = "0";
-      input.max = "50";
-      input.value = "0";
-      input.name = "qty";
-      input.inputMode = "numeric";
-      input.dataset.id = item.id;
-      input.dataset.size = size.label;
-      input.setAttribute("aria-describedby", "err-items");
-      const label = el("label", "line-label");
-      label.htmlFor = input.id;
-      label.append(el("span", "line-name", item.name), el("span", "line-meta", size.label + " · ₱" + size.price.toLocaleString("en-US")));
-      const stepper = el("div", "stepper");
-      const step = (text, delta, what) => {
-        const b = el("button", "step", text);
-        b.type = "button";
-        b.setAttribute("aria-label", what + " " + item.name + ", " + size.label);
-        b.addEventListener("click", () => stepQty(input, delta));
-        return b;
-      };
-      stepper.append(step("−", -1, "One fewer"), input, step("+", 1, "One more"));
-      line.append(img, label, stepper);
-      list.appendChild(line);
-    }));
+    items.forEach(item => {
+      const row = el("div", "order-item");
+      const photo = el("div", "photo");
+      photo.appendChild(productImg(item, ""));
+      const sizes = el("div", "sizes");
+      item.sizes.forEach((size, n) => {
+        const line = el("div", "order-line");
+        const input = el("input");
+        input.id = "qty-" + item.id + "-" + n;
+        input.type = "number";
+        input.min = "0";
+        input.max = "50";
+        input.value = "0";
+        input.name = "qty";
+        input.inputMode = "numeric";
+        input.dataset.id = item.id;
+        input.dataset.size = size.label;
+        input.setAttribute("aria-describedby", "err-items");
+        const label = el("label", "line-label");
+        label.htmlFor = input.id;
+        label.append(el("span", "visually-hidden", item.name + ", "), size.label + " · ₱" + size.price.toLocaleString("en-US"));
+        const stepper = el("div", "stepper");
+        const step = (text, delta, what) => {
+          const b = el("button", "step", text);
+          b.type = "button";
+          b.setAttribute("aria-label", what + " " + item.name + ", " + size.label);
+          b.addEventListener("click", () => stepQty(input, delta));
+          return b;
+        };
+        stepper.append(step("−", -1, "One fewer"), input, step("+", 1, "One more"));
+        line.append(label, stepper);
+        sizes.appendChild(line);
+      });
+      row.append(photo, el("p", "item-name", item.name), sizes);
+      list.appendChild(row);
+    });
     const group = el("div", "line-group");
-    group.append(el("h3", "", title), list);
+    group.append(el("p", "line-head", title), list);
     container.appendChild(group);
   });
 }
@@ -182,18 +213,22 @@ function saveCart(storage, cart) {
   try { storage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) { /* storage blocked or full */ }
 }
 const cartCount = cart => Object.values(cart).reduce((n, q) => n + q, 0);
-// Same rule as the form: only raises the first size from 0 to 1
-function addToCart(cart, id, menu = MENU) {
+// Same rule as the form: only raises a size (default: the first) from 0 to 1
+function addToCart(cart, id, menu = MENU, size) {
   const item = menu.find(m => m.id === id);
   if (!item || item.soldOut) return cart;
-  const key = lineKey(id, item.sizes[0].label);
+  const s = item.sizes.find(z => z.label === size) || item.sizes[0];
+  const key = lineKey(id, s.label);
   return cart[key] > 0 ? cart : { ...cart, [key]: 1 };
 }
-// Summary lines ({ id, name, size, qty }) from a cart, for pages without the form
+// Summary lines ({ id, name, size, qty }) from a cart, for pages without the form.
+// Only sizes the order form would show, so a stale or sold-out entry never counts.
 function cartLines(cart, menu = MENU) {
-  return Object.entries(cart).map(([key, qty]) => {
+  return Object.entries(cart).flatMap(([key, qty]) => {
     const [id, size] = key.split("|");
-    return { id, name: (menu.find(m => m.id === id) || {}).name || id, size, qty };
+    const item = menu.find(m => m.id === id);
+    if (!item || item.soldOut || !item.sizes.some(z => z.label === size)) return [];
+    return [{ id, name: item.name, size, qty }];
   });
 }
 function cartFromForm(form) {
@@ -213,22 +248,22 @@ const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").match
 
 // Only raises 0 to 1, so a quantity the customer already set is kept.
 // With the form on the page: set its line (wide screens jump to it). Otherwise: save it to the cart for order.html.
-function addToOrder(id, wide = isWide(), storage = cartStorage()) {
-  const input = document.querySelector('#order-lines input[data-id="' + id + '"]');
-  if (!input) { saveCart(storage, addToCart(loadCart(storage), id)); return; }
+function addToOrder(id, wide = isWide(), storage = cartStorage(), size) {
+  const input = document.querySelector('#order-lines input[data-id="' + id + '"]' + (size ? '[data-size="' + size + '"]' : ""));
+  if (!input) { saveCart(storage, addToCart(loadCart(storage), id, MENU, size)); return; }
   if (!(Number(input.value) > 0)) input.value = "1";
   if (!wide) return;
   input.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center" });
   input.focus({ preventScroll: true });
 }
 
-// Phone feedback for Add: "Added" on the button for 1.5s, announced through a live region
+// Feedback for Add: "Added" on the button for 1.5s, announced through a live region, then "In your order"
 function markAdded(btn, live, name) {
   btn.textContent = "Added";
-  btn.classList.add("added");
+  btn.classList.add("added", "in-cart");
   if (live) live.textContent = "Added " + name + " to your order.";
   clearTimeout(btn._addedTimer);
-  btn._addedTimer = setTimeout(() => { btn.textContent = "Add"; btn.classList.remove("added"); }, 1500);
+  btn._addedTimer = setTimeout(() => { btn.classList.remove("added"); setInCart(btn, true); }, 1500);
 }
 
 // The qty > 0 lines of the form: [{ id, name, size, qty }] (also what collectOrder sends)
@@ -288,7 +323,7 @@ async function submitOrder(order, fetchFn = fetch) {
 }
 
 // error key (from validateOrder) -> the element to flag and focus
-const ERROR_ORDER = ["name", "contact", "fbName", "items", "custom", "fulfillment", "address", "dateNeeded", "notes"];
+const ERROR_ORDER = ["items", "name", "contact", "fbName", "custom", "fulfillment", "address", "dateNeeded", "notes"];
 function errorTarget(form, key) {
   if (key === "items") return form.querySelector('input[name="qty"]');
   if (key === "custom") return form.querySelector("#occasion");
@@ -359,20 +394,31 @@ if (document.querySelector("#bestsellers, #cakes")) {
   document.addEventListener("click", e => {
     const btn = e.target.closest(".order-btn");
     if (!btn) return;
-    addToOrder(btn.dataset.id);
+    addToOrder(btn.dataset.id, undefined, undefined, btn.dataset.size);
     markAdded(btn, document.getElementById("add-status"),
       (MENU.find(m => m.id === btn.dataset.id) || {}).name || "item");
     updateOrderUI();
   });
 }
+// order.html: lines filled from the saved cart, every quantity change saved back
+function initOrderPage(form, storage = cartStorage()) {
+  renderOrderLines(MENU, form.querySelector("#order-lines"));
+  restoreCart(form, loadCart(storage));
+  form.addEventListener("input", e => {
+    if (e.target.name === "qty") saveCart(storage, cartFromForm(form));
+    updateOrderUI(form, storage);
+  });
+  // Back/Forward from bfcache keeps old inputs; the cart may have gained items on another page since
+  addEventListener("pageshow", e => {
+    if (!e.persisted || !form.isConnected) return;
+    form.querySelectorAll('input[name="qty"]').forEach(i => { i.value = "0"; });
+    restoreCart(form, loadCart(storage));
+    updateOrderUI(form, storage);
+  });
+}
 if (document.getElementById("order-lines")) {
   const form = document.getElementById("order-form");
-  renderOrderLines(MENU, document.getElementById("order-lines"));
-  restoreCart(form, loadCart(cartStorage()));
-  form.addEventListener("input", e => {
-    if (e.target.name === "qty") saveCart(cartStorage(), cartFromForm(form));
-    updateOrderUI();
-  });
+  initOrderPage(form);
   initOrderForm(form);
   const date = document.getElementById("dateNeeded");
   date.min = earliestDate(new Date());
@@ -393,7 +439,14 @@ function updateOrderUI(form = document.getElementById("order-form"), storage = c
   const list = document.getElementById("order-summary-lines");
   if (list) renderSummary(lines, list);
   const count = document.getElementById("nav-count");
-  if (count) { count.textContent = n; count.hidden = !(n > 0); }
+  if (count) {
+    const sr = document.createElement("span");
+    sr.className = "visually-hidden";
+    sr.textContent = n === 1 ? " item in your order" : " items in your order";
+    count.replaceChildren(String(n), sr);
+    count.hidden = !(n > 0);
+  }
+  if (!form || !form.isConnected) markCartButtons(document, loadCart(storage));
   const bar = document.getElementById("order-bar");
   if (!bar) return;
   bar.textContent = barLabel(n);
