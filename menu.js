@@ -1,0 +1,16 @@
+const MENU = [
+  { id: "chocolate-cake", name: "Sample Chocolate Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-chocolate-cake.svg", sizes: [{ label: "6-inch", price: 650 }, { label: "8-inch", price: 950 }], tags: ["Bestseller"], soldOut: false },
+  { id: "ube-cake", name: "Sample Ube Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-ube-cake.svg", sizes: [{ label: "8-inch", price: 900 }], tags: ["Bestseller"], soldOut: false },
+  { id: "mocha-cake", name: "Sample Mocha Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-mocha-cake.svg", sizes: [{ label: "8-inch", price: 950 }], tags: [], soldOut: false },
+  { id: "red-velvet-cake", name: "Sample Red Velvet Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-red-velvet-cake.svg", sizes: [{ label: "6-inch", price: 650 }, { label: "8-inch", price: 950 }], tags: [], soldOut: false },
+  { id: "caramel-cake", name: "Sample Caramel Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-caramel-cake.svg", sizes: [{ label: "8-inch", price: 1050 }], tags: ["Bestseller"], soldOut: false },
+  { id: "lemon-cake", name: "Sample Lemon Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-lemon-cake.svg", sizes: [{ label: "8-inch", price: 1100 }], tags: [], soldOut: false },
+  { id: "carrot-cake", name: "Sample Carrot Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-carrot-cake.svg", sizes: [{ label: "6-inch", price: 650 }, { label: "8-inch", price: 950 }], tags: [], soldOut: false },
+  { id: "strawberry-cake", name: "Sample Strawberry Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-strawberry-cake.svg", sizes: [{ label: "8-inch", price: 1200 }], tags: ["New"], soldOut: false },
+  { id: "cheesecake-cake", name: "Sample Cheesecake Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-cheesecake-cake.svg", sizes: [{ label: "8-inch", price: 1250 }], tags: [], soldOut: false },
+  { id: "banana-cake", name: "Sample Banana Cake", category: "cake", description: "A short sample description.", photo: "photos/sample-banana-cake.svg", sizes: [{ label: "6-inch", price: 650 }, { label: "8-inch", price: 950 }], tags: [], soldOut: true },
+  { id: "brownies", name: "Sample Brownies", category: "pastry", description: "A short sample description.", photo: "photos/sample-brownies.svg", sizes: [{ label: "Box of 6", price: 180 }], tags: [], soldOut: false },
+  { id: "cookies", name: "Sample Cookies", category: "pastry", description: "A short sample description.", photo: "photos/sample-cookies.svg", sizes: [{ label: "Box of 6", price: 220 }], tags: [], soldOut: false },
+  { id: "ensaymada", name: "Sample Ensaymada", category: "pastry", description: "A short sample description.", photo: "photos/sample-ensaymada.svg", sizes: [{ label: "Box of 6", price: 260 }], tags: [], soldOut: false },
+  { id: "cupcakes", name: "Sample Cupcakes", category: "pastry", description: "A short sample description.", photo: "photos/sample-cupcakes.svg", sizes: [{ label: "Box of 6", price: 300 }], tags: [], soldOut: false },
+];

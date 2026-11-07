@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Annesweet tests</title></head>
+<body>
+<h1>Annesweet tests</h1>
+<ul id="failures"></ul>
+<script src="menu.js"></script>
+<script src="script.js"></script>
+<script>
+const tests = [];
+function test(name, fn) { tests.push({ name, fn }); }
+function assertEqual(actual, expected) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected))
+    throw new Error("expected " + JSON.stringify(expected) + " but got " + JSON.stringify(actual));
+}
+async function runTests() {
+  let passed = 0, failed = 0;
+  for (const t of tests) {
+    try { await t.fn(); passed++; }
+    catch (e) {
+      failed++;
+      const li = document.createElement("li");
+      li.textContent = t.name + ": " + e.message;
+      document.getElementById("failures").appendChild(li);
+    }
+  }
+  const p = document.createElement("p");
+  p.id = "summary";
+  p.textContent = passed + " passed, " + failed + " failed";
+  document.body.appendChild(p);
+}
+
+function fixture() {
+  const c = document.createElement("div");
+  c.innerHTML = '<div id="bestsellers"></div><div id="cakes"></div><div id="pastries"></div>';
+  return c;
+}
+const item = (id, category, extra) => Object.assign({
+  id, name: "Sample " + id, category, description: "d", photo: "photos/x.svg",
+  sizes: [{ label: "Box", price: 100 }], tags: [], soldOut: false }, extra);
+
+test("formatPrice single size", () =>
+  assertEqual(formatPrice({ sizes: [{ label: "Box of 6", price: 180 }] }), "₱180"));
+test("formatPrice multiple sizes uses From lowest", () =>
+  assertEqual(formatPrice({ sizes: [{ label: "8-inch", price: 950 }, { label: "6-inch", price: 650 }] }), "From ₱650"));
+test("formatPrice adds thousands comma", () =>
+  assertEqual(formatPrice({ sizes: [{ label: "x", price: 1250 }] }), "₱1,250"));
+test("renderMenu puts cakes and pastries in their sections", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake"), item("b", "cake"), item("c", "pastry")], c);
+  assertEqual(c.querySelectorAll("#cakes .card").length, 2);
+  assertEqual(c.querySelectorAll("#pastries .card").length, 1);
+});
+test("bestsellers row holds only Bestseller-tagged items", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { tags: ["Bestseller"] }), item("b", "cake"), item("c", "pastry", { tags: ["Bestseller"] })], c);
+  assertEqual(c.querySelectorAll("#bestsellers .card").length, 2);
+});
+test("sold out card has class sold-out, a Sold out label and no Add button", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { soldOut: true }), item("b", "cake")], c);
+  const cards = c.querySelectorAll("#cakes .card");
+  assertEqual(cards[0].classList.contains("sold-out"), true);
+  assertEqual(cards[0].querySelector("button"), null);
+  assertEqual(cards[0].querySelector(".sold-out-label").textContent, "Sold out");
+  assertEqual(cards[1].querySelector("button").dataset.id, "b");
+});
+test("each card shows its tags as .tag elements", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { tags: ["Bestseller", "New"] })], c);
+  assertEqual([...c.querySelectorAll("#cakes .tag")].map(t => t.textContent), ["Bestseller", "New"]);
+});
+test("card text is not parsed as HTML", () => {
+  const c = fixture();
+  renderMenu([item("a", "cake", { name: "<b>x</b>" })], c);
+  assertEqual(c.querySelector("#cakes .card b"), null);
+});
+test("MENU ids are unique", () =>
+  assertEqual(new Set(MENU.map(i => i.id)).size, MENU.length));
+test("MENU has 10 cakes and 4 pastries", () => {
+  assertEqual(MENU.filter(i => i.category === "cake").length, 10);
+  assertEqual(MENU.filter(i => i.category === "pastry").length, 4);
+});
+
+const today = new Date("2026-11-07T04:00:00Z"); // noon Nov 7 in Manila, whatever the browser's timezone
+const ok = { name: "Maria", contact: "09171234567", fbName: "", items: [{ id: "a", name: "A", size: "6-inch", qty: 1 }],
+  custom: { occasion: "", size: "", flavor: "", message: "", design: "" },
+  fulfillment: "pickup", address: "", dateNeeded: "2026-11-10", notes: "", website: "" };
+const errOf = (patch, field) => validateOrder({ ...ok, ...patch }, today)[field];
+
+test("earliestDate is today + 3", () => assertEqual(earliestDate(today), "2026-11-10"));
+test("earliestDate crosses month end", () => assertEqual(earliestDate(new Date("2026-11-29T04:00:00Z")), "2026-12-02"));
+test("earliestDate uses Manila date for a US-evening phone", () =>
+  assertEqual(earliestDate(new Date("2026-11-07T20:00:00-08:00")), "2026-11-11"));
+test("normalizePhone strips spaces and dashes", () => assertEqual(normalizePhone("0917 123-4567"), "09171234567"));
+test("valid order has no errors", () => assertEqual(Object.keys(validateOrder(ok, today)).length, 0));
+test("phone with spaces accepted", () => assertEqual(errOf({ contact: "0917 123 4567" }, "contact"), undefined));
+test("phone with dashes accepted", () => assertEqual(errOf({ contact: "0917-123-4567" }, "contact"), undefined));
+test("+63 phone accepted", () => assertEqual(errOf({ contact: "+639171234567" }, "contact"), undefined));
+test("short phone rejected", () => assertEqual(typeof errOf({ contact: "0917123" }, "contact"), "string"));
+test("missing name rejected", () => assertEqual(typeof errOf({ name: "   " }, "name"), "string"));
+test("name over 100 rejected", () => assertEqual(typeof errOf({ name: "x".repeat(101) }, "name"), "string"));
+test("fbName over 100 rejected", () => assertEqual(typeof errOf({ fbName: "x".repeat(101) }, "fbName"), "string"));
+test("no items and no custom rejected", () => assertEqual(typeof errOf({ items: [] }, "items"), "string"));
+test("custom cake only is accepted", () =>
+  assertEqual(errOf({ items: [], custom: { ...ok.custom, design: "unicorn" } }, "items"), undefined));
+test("custom field over 300 rejected", () =>
+  assertEqual(typeof errOf({ custom: { ...ok.custom, design: "x".repeat(301) } }, "custom"), "string"));
+test("date 2 days ahead rejected", () => assertEqual(typeof errOf({ dateNeeded: "2026-11-09" }, "dateNeeded"), "string"));
+test("missing date rejected", () => assertEqual(typeof errOf({ dateNeeded: "" }, "dateNeeded"), "string"));
+test("bad fulfillment rejected", () => assertEqual(typeof errOf({ fulfillment: "drone" }, "fulfillment"), "string"));
+test("delivery without address rejected", () =>
+  assertEqual(typeof errOf({ fulfillment: "delivery", address: " " }, "address"), "string"));
+test("delivery with address accepted", () =>
+  assertEqual(errOf({ fulfillment: "delivery", address: "1 Main St" }, "address"), undefined));
+test("pickup without address accepted", () => assertEqual(errOf({ address: "" }, "address"), undefined));
+test("qty 51 rejected", () =>
+  assertEqual(typeof errOf({ items: [{ id: "a", name: "A", size: "6-inch", qty: 51 }] }, "items"), "string"));
+test("fractional qty rejected", () =>
+  assertEqual(typeof errOf({ items: [{ id: "a", name: "A", size: "6-inch", qty: 1.5 }] }, "items"), "string"));
+test("notes over 500 rejected", () => assertEqual(typeof errOf({ notes: "x".repeat(501) }, "notes"), "string"));
+
+function linesFixture(menu) {
+  document.getElementById("lines-fixture")?.remove();
+  const c = document.createElement("div");
+  c.id = "lines-fixture";
+  c.innerHTML = '<div id="order-lines"></div>';
+  document.body.appendChild(c);
+  renderOrderLines(menu, c.firstChild);
+  return c;
+}
+const twoSizes = item("t", "cake", { sizes: [{ label: "6-inch", price: 1 }, { label: "8-inch", price: 2 }] });
+test("renderOrderLines skips sold out and makes one line per size", () => {
+  const c = linesFixture([twoSizes, item("s", "cake", { soldOut: true }), item("u", "pastry")]);
+  const ins = [...c.querySelectorAll("input")];
+  assertEqual(ins.map(i => i.dataset.id + "/" + i.dataset.size), ["t/6-inch", "t/8-inch", "u/Box"]);
+  assertEqual(ins.every(i => i.name === "qty" && i.type === "number" && i.min === "0" && i.max === "50" && i.value === "0"), true);
+});
+test("addToOrder sets 0 to 1", () => {
+  const c = linesFixture([twoSizes]);
+  addToOrder("t");
+  assertEqual(c.querySelector("input").value, "1");
+});
+test("addToOrder on a phone sets 1 but does not move focus", () => {
+  const c = linesFixture([twoSizes]);
+  const before = document.activeElement;
+  addToOrder("t", false);
+  assertEqual(c.querySelector("input").value, "1");
+  assertEqual(document.activeElement === before, true);
+});
+test("addToOrder on a wide screen focuses the line", () => {
+  const c = linesFixture([twoSizes]);
+  addToOrder("t", true);
+  assertEqual(document.activeElement === c.querySelector("input"), true);
+});
+test("markAdded shows Added, announces it, then reverts", async () => {
+  const btn = document.createElement("button"), live = document.createElement("p");
+  btn.textContent = "Add";
+  markAdded(btn, live, "Ube Cake");
+  assertEqual([btn.textContent, live.textContent], ["Added", "Added Ube Cake to your order."]);
+  await new Promise(r => setTimeout(r, 1600));
+  assertEqual(btn.textContent, "Add");
+});
+test("addToOrder keeps an existing 3", () => {
+  const c = linesFixture([twoSizes]);
+  c.querySelector("input").value = "3";
+  addToOrder("t");
+  assertEqual(c.querySelector("input").value, "3");
+});
+
+function formFixture(patch) {
+  document.getElementById("form-fixture")?.remove();
+  const v = Object.assign({ name: "Maria", contact: " 0917 123 4567 ", dateNeeded: earliestDate(new Date()) }, patch);
+  const c = document.createElement("div");
+  c.id = "form-fixture";
+  c.innerHTML = '<form novalidate>' +
+    ["name", "contact", "fbName", "occasion", "message", "flavor", "design", "address", "notes", "website"].map(n =>
+      '<input id="' + n + '" name="' + n + '"><p class="error" id="err-' + n + '"></p>').join("") +
+    '<input id="customSize" name="size"><p class="error" id="err-customSize"></p>' +
+    '<input id="dateNeeded" name="dateNeeded" type="date"><p class="error" id="err-dateNeeded"></p>' +
+    '<div id="order-lines"></div><p class="error" id="err-items"></p><p class="error" id="err-custom"></p>' +
+    '<input type="radio" name="fulfillment" value="pickup" checked><p class="error" id="err-fulfillment"></p>' +
+    '<button type="submit">Send</button></form>';
+  document.body.appendChild(c);
+  const f = c.firstChild;
+  renderOrderLines([item("t", "cake")], f.querySelector("#order-lines"));
+  Object.entries(v).forEach(([k, val]) => { f.elements[k].value = val; });
+  f.querySelector('input[name="qty"]').value = "2";
+  return f;
+}
+
+test("collectOrder keeps only qty > 0 lines", () => {
+  const f = formFixture();
+  const o = collectOrder(f);
+  assertEqual(o.items, [{ id: "t", name: "t", size: "Box", qty: 2 }]);
+  f.querySelector('input[name="qty"]').value = "0";
+  assertEqual(collectOrder(f).items, []);
+});
+test("collectOrder drops a typed address when fulfillment is pickup", () => {
+  const f = formFixture({ address: "1 Main St" });
+  assertEqual(collectOrder(f).address, "");
+});
+test("showErrors returns true for an error with no focusable field", () => {
+  const f = formFixture();
+  assertEqual(showErrors(f, { bogus: "x" }), true);
+  assertEqual(showErrors(f, {}), false);
+});
+test("collectOrder trims and normalizes contact", () => {
+  const f = formFixture({ name: "  Maria ", notes: " hi " });
+  const o = collectOrder(f);
+  assertEqual([o.name, o.contact, o.notes, o.fulfillment, o.website], ["Maria", "09171234567", "hi", "pickup", ""]);
+});
+test("orderSummary lists only qty > 0 lines as name, size, qty", () => {
+  const f = formFixture();
+  renderOrderLines([twoSizes, item("u", "pastry")], f.querySelector("#order-lines"));
+  const qty = [...f.querySelectorAll('input[name="qty"]')];
+  qty[1].value = "2"; qty[2].value = "1";
+  assertEqual(orderSummary(f).map(l => [l.name, l.size, l.qty]), [["t", "8-inch", 2], ["u", "Box", 1]]);
+  qty.forEach(i => { i.value = "0"; });
+  assertEqual(orderSummary(f), []);
+});
+test("orderCount adds up quantities and barLabel says it", () => {
+  assertEqual(orderCount([{ qty: 2 }, { qty: 3 }]), 5);
+  assertEqual(barLabel(5), "5 items · Review order");
+  assertEqual(barLabel(1), "1 item · Review order");
+});
+test("bar hidden at 0, over the form and while typing; shown otherwise", () => {
+  assertEqual(barHidden(0, false, false), true);
+  assertEqual(barHidden(2, true, false), true);
+  assertEqual(barHidden(2, false, true), true);
+  assertEqual(barHidden(2, false, false), false);
+});
+test("renderSummary writes qty × item (size) lines as text", () => {
+  const ul = document.createElement("ul");
+  renderSummary([{ name: "<b>Ube</b>", size: "8-inch", qty: 2 }], ul);
+  assertEqual([...ul.children].map(li => li.textContent), ["2 × <b>Ube</b> (8-inch)"]);
+  renderSummary([], ul);
+  assertEqual(ul.children.length, 1);
+});
+const fetchReturning = body => async () => ({ json: async () => body });
+const withUrl = async fn => { APPS_SCRIPT_URL = "https://example.test/x"; try { await fn(); } finally { APPS_SCRIPT_URL = ""; } };
+test("submitOrder ok on {ok:true}", () => withUrl(async () =>
+  assertEqual((await submitOrder(ok, fetchReturning({ ok: true }))).ok, true)));
+test("submitOrder not ok on {ok:false}, passing the server's error on", () => withUrl(async () =>
+  assertEqual(await submitOrder(ok, fetchReturning({ ok: false, error: "x" })), { ok: false, error: "x" })));
+test("submitOrder not ok on network error", () => withUrl(async () =>
+  assertEqual((await submitOrder(ok, async () => { throw new Error("offline"); })).ok, false)));
+test("submitOrder not ok on unparseable response", () => withUrl(async () =>
+  assertEqual((await submitOrder(ok, async () => ({ json: async () => { throw new Error("bad"); } }))).ok, false)));
+test("submitOrder sends an abort signal (timeout)", () => withUrl(async () => {
+  let signal;
+  await submitOrder(ok, async (u, opts) => { signal = opts.signal; return { json: async () => ({ ok: true }) }; });
+  assertEqual(signal instanceof AbortSignal, true);
+}));
+test("submitOrder not ok and no fetch when APPS_SCRIPT_URL is empty", async () => {
+  let calls = 0;
+  assertEqual((await submitOrder(ok, async () => { calls++; return { json: async () => ({ ok: true }) }; })).ok, false);
+  assertEqual(calls, 0);
+});
+test("send button disabled while sending", () => withUrl(async () => {
+  const f = formFixture();
+  let calls = 0;
+  initOrderForm(f, () => { calls++; return new Promise(() => {}); });
+  const b = f.querySelector("button");
+  b.click(); b.click();
+  assertEqual(calls, 1);
+  assertEqual(b.disabled, true);
+}));
+test("invalid submit shows errors, flags field, focuses it, sends nothing", () => withUrl(async () => {
+  const f = formFixture({ name: "" });
+  let calls = 0;
+  initOrderForm(f, async () => { calls++; });
+  f.querySelector("button").click();
+  assertEqual(calls, 0);
+  assertEqual(f.querySelector("#err-name").textContent.length > 0, true);
+  assertEqual(f.querySelector("#name").getAttribute("aria-invalid"), "true");
+  assertEqual(document.activeElement === f.querySelector("#name"), true);
+  f.querySelector("#name").value = "Maria";
+  f.querySelector("button").click();
+  assertEqual(f.querySelector("#err-name").textContent, "");
+  assertEqual(f.querySelector("#name").hasAttribute("aria-invalid"), false);
+}));
+test("failure shows alert and keeps fields; success replaces form", () => withUrl(async () => {
+  let f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: false }));
+  f.querySelector("button").click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(f.querySelector('[role="alert"]').textContent.startsWith("Couldn't send — please try again or message us on Facebook"), true);
+  assertEqual(f.querySelector("button").disabled, false);
+  assertEqual(f.querySelector('[role="alert"] a').target, "_blank");
+  assertEqual(f.querySelector("#name").value, "Maria");
+
+  f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: true }));
+  f.querySelector("button").click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(document.getElementById("form-fixture").textContent.includes("Thanks! Annesweet will message you to confirm your order and payment."), true);
+}));
+
+test("successful send empties the summary and hides the bar", () => withUrl(async () => {
+  const ui = document.createElement("div");
+  ui.innerHTML = '<ul id="order-summary-lines"></ul><a id="order-bar" hidden></a>';
+  document.body.appendChild(ui);
+  try {
+    const f = formFixture();
+    updateOrderUI(f);
+    assertEqual(document.querySelector("#order-summary-lines").textContent, "2 × t (Box)");
+    assertEqual(document.getElementById("order-bar").hidden, false);
+    initOrderForm(f, fetchReturning({ ok: true }));
+    f.querySelector("button").click();
+    await new Promise(r => setTimeout(r, 0));
+    assertEqual(document.querySelector("#order-summary-lines").textContent, "Nothing added yet.");
+    assertEqual(document.getElementById("order-bar").hidden, true);
+  } finally { ui.remove(); document.body.classList.remove("has-bar"); }
+}));
+
+test("failure alert shows the server's reason", () => withUrl(async () => {
+  const f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: false, error: "Date must be at least 3 days ahead." }));
+  f.querySelector("button").click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(f.querySelector('[role="alert"]').textContent.includes("Date must be at least 3 days ahead."), true);
+}));
+
+runTests();
+</script>
+</body></html>
