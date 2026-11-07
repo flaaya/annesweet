@@ -15,24 +15,31 @@ function makeCard(item) {
     if (text !== undefined) e.textContent = text;
     return e;
   };
+  // Row: photo · name, description, tags · price and Add (bestsellers restyle the same markup)
   const card = el("article", "card" + (item.soldOut ? " sold-out" : ""));
   const img = el("img");
   img.src = item.photo;
   img.alt = item.name;
   img.loading = "lazy";
-  card.appendChild(img);
+  img.width = 400;
+  img.height = 400;
+  const body = el("div", "card-body");
   const tags = el("div", "tags");
   item.tags.forEach(t => tags.appendChild(el("span", "tag", t)));
-  card.append(tags, el("h3", "", item.name), el("p", "desc", item.description),
-    el("p", "price", formatPrice(item)));
+  body.append(el("h3", "", item.name), el("p", "desc", item.description));
+  if (item.tags.length) body.appendChild(tags);
+  const side = el("div", "card-side");
+  side.appendChild(el("p", "price", formatPrice(item)));
   if (item.soldOut) {
-    card.appendChild(el("p", "sold-out-label", "Sold out"));
+    side.appendChild(el("p", "sold-out-label", "Sold out"));
   } else {
-    const btn = el("button", "order-btn", "Order this");
+    const btn = el("button", "order-btn", "Add");
     btn.type = "button";
     btn.dataset.id = item.id;
-    card.appendChild(btn);
+    btn.setAttribute("aria-label", "Add " + item.name + " to your order");
+    side.appendChild(btn);
   }
+  card.append(img, body, side);
   return card;
 }
 
@@ -124,13 +131,38 @@ function addToOrder(id) {
   input.focus({ preventScroll: true });
 }
 
-function collectOrder(form) {
-  const f = n => form.elements[n];
-  const t = n => f(n).value.trim();
-  const items = [...form.querySelectorAll('input[name="qty"]')]
+// The qty > 0 lines of the form: [{ id, name, size, qty }] (also what collectOrder sends)
+function orderSummary(form) {
+  return [...form.querySelectorAll('input[name="qty"]')]
     .map(i => ({ id: i.dataset.id, name: (MENU.find(m => m.id === i.dataset.id) || {}).name || i.dataset.id,
       size: i.dataset.size, qty: Number(i.value) }))
     .filter(i => i.qty > 0);
+}
+
+const orderCount = lines => lines.reduce((n, l) => n + l.qty, 0);
+const barLabel = n => n + (n === 1 ? " item" : " items") + " · Review order";
+// The phone bar never shows with nothing ordered, over the form itself, or over the keyboard
+const barHidden = (n, orderOnScreen, typing) => !(n > 0) || orderOnScreen || typing;
+
+function renderSummary(lines, list) {
+  list.textContent = "";
+  if (!lines.length) {
+    const li = document.createElement("li");
+    li.className = "summary-empty";
+    li.textContent = "Nothing added yet.";
+    list.appendChild(li);
+  }
+  lines.forEach(l => {
+    const li = document.createElement("li");
+    li.textContent = l.qty + " × " + l.name + " (" + l.size + ")";
+    list.appendChild(li);
+  });
+}
+
+function collectOrder(form) {
+  const f = n => form.elements[n];
+  const t = n => f(n).value.trim();
+  const items = orderSummary(form);
   const checked = form.querySelector('input[name="fulfillment"]:checked');
   return {
     name: t("name"), contact: normalizePhone(t("contact")), fbName: t("fbName"), items,
@@ -206,6 +238,7 @@ function initOrderForm(form, fetchFn = fetch) {
     const result = await submitOrder(order, fetchFn);
     if (result.ok) {
       const done = document.createElement("p");
+      done.className = "thanks";
       done.setAttribute("role", "status");
       done.textContent = "Thanks! Annesweet will message you to confirm your order and payment.";
       form.replaceWith(done);
@@ -223,7 +256,7 @@ if (document.getElementById("cakes")) {
   renderMenu(MENU, document);
   document.addEventListener("click", e => {
     const btn = e.target.closest(".order-btn");
-    if (btn) addToOrder(btn.dataset.id);
+    if (btn) { addToOrder(btn.dataset.id); updateOrderUI(); }
   });
 }
 if (document.getElementById("order-lines")) {
@@ -238,4 +271,27 @@ if (document.getElementById("order-lines")) {
   };
   document.querySelectorAll('input[name="fulfillment"]').forEach(r => r.addEventListener("change", toggleAddress));
   toggleAddress(); // a restored form may already have Delivery ticked
+}
+
+// Summary (desktop) and bottom bar (phone); a sent form is detached, which counts as nothing ordered
+let orderOnScreen = false, typing = false;
+function updateOrderUI() {
+  const form = document.getElementById("order-form");
+  const list = document.getElementById("order-summary-lines");
+  const bar = document.getElementById("order-bar");
+  if (!form || !list || !bar) return;
+  const lines = form.isConnected ? orderSummary(form) : [];
+  renderSummary(lines, list);
+  const n = orderCount(lines);
+  bar.textContent = barLabel(n);
+  bar.hidden = barHidden(n, orderOnScreen, typing);
+  document.body.classList.toggle("has-bar", !bar.hidden);
+}
+if (document.getElementById("order-bar")) {
+  document.getElementById("order-form").addEventListener("input", updateOrderUI);
+  document.addEventListener("focusin", e => { typing = e.target.matches("input, textarea, select"); updateOrderUI(); });
+  document.addEventListener("focusout", () => { typing = false; updateOrderUI(); });
+  new IntersectionObserver(([e]) => { orderOnScreen = e.isIntersecting; updateOrderUI(); })
+    .observe(document.getElementById("order"));
+  updateOrderUI();
 }

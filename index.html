@@ -4,56 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Annesweet</title>
+<meta name="description" content="Annesweet: home-baked cakes and pastries, made to order. Order 3 days ahead.">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E0D13" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Figtree:wght@400;600&display=swap">
 <link rel="stylesheet" href="style.css">
 <script src="menu.js" defer></script>
 <script src="script.js" defer></script>
 </head>
 <body>
 <header class="topbar">
-  <strong>Annesweet</strong>
-  <a href="#order" class="btn">Order now</a>
+  <a href="#top" class="topbar-mark">annesweet</a>
+  <nav aria-label="Main">
+    <a href="#menu">Menu</a>
+    <a href="#order">Order</a>
+  </nav>
 </header>
-<main>
+<main id="top">
   <section class="hero">
-    <img src="photos/sample-chocolate-cake.svg" alt="Annesweet cakes and pastries">
-    <h1>Homemade cakes and pastries, baked fresh for you</h1>
-    <p>Pick your favorites below and send a request. We will message you to confirm.</p>
+    <img src="photos/sample-chocolate-cake.svg" alt="A whole Annesweet cake" width="1200" height="900">
+    <div class="hero-text">
+      <h1 class="wordmark">Annesweet<span class="visually-hidden"> — home-baked cakes and pastries</span></h1>
+      <p class="lead">Home-baked cakes and pastries, made to order. Order 3 days ahead.</p>
+      <a href="#order" class="btn">Order a cake</a>
+    </div>
   </section>
-  <section>
-    <h2>Bestsellers</h2>
-    <div id="bestsellers" class="grid"></div>
+  <section aria-labelledby="h-best">
+    <h2 id="h-best">Bestsellers</h2>
+    <div id="bestsellers" class="rail"></div>
   </section>
-  <section>
-    <h2>Cakes</h2>
-    <div id="cakes" class="grid"></div>
+  <section id="menu" aria-labelledby="h-cakes">
+    <h2 id="h-cakes">Cakes</h2>
+    <div id="cakes" class="rows"></div>
   </section>
-  <section class="custom-card">
-    <h2>Custom Cakes</h2>
-    <p>Want something special? Tell us in the order form.</p>
-    <a href="#order" class="btn">Go to order form</a>
+  <section class="menu-more" aria-labelledby="h-pastries">
+    <h2 id="h-pastries">Pastries</h2>
+    <div id="pastries" class="rows"></div>
   </section>
-  <section>
-    <h2>Pastries</h2>
-    <div id="pastries" class="grid"></div>
+  <section class="band" aria-labelledby="h-custom">
+    <div class="band-inner">
+      <h2 id="h-custom">Custom cakes</h2>
+      <p>Birthdays, christenings, weddings: tell us the occasion and we will design the cake with you. Please order a week ahead.</p>
+      <a href="#custom-cake" class="btn">Describe your cake</a>
+    </div>
   </section>
-  <section>
-    <h2>Why order from us</h2>
-    <ul>
-      <li>Baked fresh to order</li>
-      <li>Custom designs for any celebration</li>
-      <li>Made at home with care</li>
-    </ul>
-  </section>
-  <section>
-    <h2>How to order</h2>
-    <ol>
-      <li>Send a request</li>
-      <li>We message you to confirm and arrange payment</li>
-      <li>Pick up or get it delivered</li>
+  <section aria-labelledby="h-how">
+    <h2 id="h-how">How to order</h2>
+    <ol class="steps">
+      <li><h3>Send a request</h3><p>Choose from the menu or describe a custom design in the form below. Everything is baked fresh to order, so we need 3 days (a week for custom cakes).</p></li>
+      <li><h3>We message you</h3><p>We confirm the details and the price with you and arrange payment.</p></li>
+      <li><h3>Pick up or get it delivered</h3><p>Collect it from us, or we book a Lalamove or Grab rider for you. The rider fee is paid by the customer.</p></li>
     </ol>
   </section>
-  <section id="order">
-  <h2>Order form</h2>
+  <section id="order" aria-labelledby="h-order">
+  <h2 id="h-order">Order form</h2>
+  <div class="order-layout">
   <form id="order-form" novalidate>
     <div class="field">
       <label for="name">Your name</label>
@@ -75,7 +82,7 @@
       <div id="order-lines"></div>
       <p class="error" id="err-items"></p>
     </fieldset>
-    <fieldset class="field" aria-describedby="err-custom">
+    <fieldset class="field" id="custom-cake" aria-describedby="err-custom">
       <legend>Custom cake (optional)</legend>
     <div class="field">
       <label for="occasion">Occasion</label>
@@ -131,8 +138,15 @@
     <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
     <button type="submit" class="btn">Send order request</button>
   </form>
+  <aside class="order-summary" aria-labelledby="h-summary">
+    <h3 id="h-summary">Your order</h3>
+    <ul id="order-summary-lines"></ul>
+    <p class="summary-note">Prices are confirmed by message.</p>
+  </aside>
+  </div>
   </section>
 </main>
+<a href="#order" class="order-bar" id="order-bar" hidden></a>
 <footer>
   <p>Contact: 09XX XXX XXXX</p>
   <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>

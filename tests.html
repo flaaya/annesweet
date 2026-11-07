@@ -55,12 +55,13 @@ test("bestsellers row holds only Bestseller-tagged items", () => {
   renderMenu([item("a", "cake", { tags: ["Bestseller"] }), item("b", "cake"), item("c", "pastry", { tags: ["Bestseller"] })], c);
   assertEqual(c.querySelectorAll("#bestsellers .card").length, 2);
 });
-test("sold out card has class sold-out and no Order this button", () => {
+test("sold out card has class sold-out, a Sold out label and no Add button", () => {
   const c = fixture();
   renderMenu([item("a", "cake", { soldOut: true }), item("b", "cake")], c);
   const cards = c.querySelectorAll("#cakes .card");
   assertEqual(cards[0].classList.contains("sold-out"), true);
   assertEqual(cards[0].querySelector("button"), null);
+  assertEqual(cards[0].querySelector(".sold-out-label").textContent, "Sold out");
   assertEqual(cards[1].querySelector("button").dataset.id, "b");
 });
 test("each card shows its tags as .tag elements", () => {
@@ -187,6 +188,33 @@ test("collectOrder trims and normalizes contact", () => {
   const f = formFixture({ name: "  Maria ", notes: " hi " });
   const o = collectOrder(f);
   assertEqual([o.name, o.contact, o.notes, o.fulfillment, o.website], ["Maria", "09171234567", "hi", "pickup", ""]);
+});
+test("orderSummary lists only qty > 0 lines as name, size, qty", () => {
+  const f = formFixture();
+  renderOrderLines([twoSizes, item("u", "pastry")], f.querySelector("#order-lines"));
+  const qty = [...f.querySelectorAll('input[name="qty"]')];
+  qty[1].value = "2"; qty[2].value = "1";
+  assertEqual(orderSummary(f).map(l => [l.name, l.size, l.qty]), [["t", "8-inch", 2], ["u", "Box", 1]]);
+  qty.forEach(i => { i.value = "0"; });
+  assertEqual(orderSummary(f), []);
+});
+test("orderCount adds up quantities and barLabel says it", () => {
+  assertEqual(orderCount([{ qty: 2 }, { qty: 3 }]), 5);
+  assertEqual(barLabel(5), "5 items · Review order");
+  assertEqual(barLabel(1), "1 item · Review order");
+});
+test("bar hidden at 0, over the form and while typing; shown otherwise", () => {
+  assertEqual(barHidden(0, false, false), true);
+  assertEqual(barHidden(2, true, false), true);
+  assertEqual(barHidden(2, false, true), true);
+  assertEqual(barHidden(2, false, false), false);
+});
+test("renderSummary writes qty × item (size) lines as text", () => {
+  const ul = document.createElement("ul");
+  renderSummary([{ name: "<b>Ube</b>", size: "8-inch", qty: 2 }], ul);
+  assertEqual([...ul.children].map(li => li.textContent), ["2 × <b>Ube</b> (8-inch)"]);
+  renderSummary([], ul);
+  assertEqual(ul.children.length, 1);
 });
 const fetchReturning = body => async () => ({ json: async () => body });
 const withUrl = async fn => { APPS_SCRIPT_URL = "https://example.test/x"; try { await fn(); } finally { APPS_SCRIPT_URL = ""; } };

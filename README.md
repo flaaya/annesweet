@@ -25,7 +25,7 @@ Open each file in any text editor. Use "find" (Ctrl+F or Cmd+F) to locate the te
 | `index.html` | `photos/sample-chocolate-cake.svg` (the big picture at the top, in the `<img>`) | A real photo of the bakery's cakes, such as `photos/hero.jpg` |
 | `photos/` | Files named `sample-....svg` | Real photos |
 
-Photo tips: square, under about 200 KB each (shrink them free at squoosh.app), and shot the same way (same angle, plain background, daylight). Put them in `photos/` and point each menu item's `photo:` at the new file name. In each `photo:` line, change the `.svg` ending to the new `.jpg` file name (for example `photos/sample-ube-cake.svg` becomes `photos/ube-cake.jpg`).
+Photo tips: square for menu items (the big top picture is shown as a 4:3 landscape), under about 200 KB each (shrink them free at squoosh.app), and shot the same way (same angle, plain background, daylight). Put them in `photos/` and point each menu item's `photo:` at the new file name. In each `photo:` line, change the `.svg` ending to the new `.jpg` file name (for example `photos/sample-ube-cake.svg` becomes `photos/ube-cake.jpg`).
 
 ## Step 1. Telegram bot (so Mom gets alerts)
 
