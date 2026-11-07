@@ -81,6 +81,12 @@ test("every cake is offered in 8-inch and 10-inch; pastries are boxes", () => {
   assertEqual(MENU.filter(i => i.category === "cake").every(i => sizes(i).join() === "8-inch,10-inch"), true);
   assertEqual(MENU.filter(i => i.category === "pastry").every(i => sizes(i).join() === "Box of 6"), true);
 });
+test("replay restarts an animation class", () => {
+  const e = document.createElement("p");
+  replay(e, "swap");
+  replay(e, "swap");
+  assertEqual(e.classList.contains("swap"), true);
+});
 test("detailFacts only lists lines that are filled in", () => {
   assertEqual(detailFacts({ ingredients: "Flour, eggs", contains: "  ", calories: undefined }), [{ label: "Ingredients", text: "Flour, eggs" }]);
   assertEqual(detailFacts({}), []);

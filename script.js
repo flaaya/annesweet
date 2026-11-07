@@ -80,6 +80,7 @@ function makeCard(item, opts = {}) {
         radio.addEventListener("change", () => {
           price.textContent = "₱" + size.price.toLocaleString("en-US");
           btn.dataset.size = size.label;
+          replay(price, "swap");
           clearTimeout(btn._addedTimer);
           btn.classList.remove("added");
           markCartButtons(card, loadCart(cartStorage()));
@@ -680,6 +681,9 @@ function initTopbarTools(storage = wishStorage()) {
 }
 if (document.getElementById("search-toggle")) initTopbarTools();
 
+// Restart a CSS animation class (for the price and Add flash on a size change)
+function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
 // ---------- Cake detail window ----------
 // Optional text fields per item in menu.js: ingredients, contains (allergens), calories. A line only shows once it is filled in.
 const DETAIL_FIELDS = [["Ingredients", "ingredients"], ["Contains", "contains"], ["Calories", "calories"]];
@@ -745,6 +749,8 @@ function makeCakeDetail(item) {
           clearTimeout(add._addedTimer);
           add.classList.remove("added");
           markCartButtons(wrap, loadCart(cartStorage()));
+          replay(price, "swap");
+          replay(add, "retint");
         });
         opt.append(radio, el("span", "", size.label));
         group.appendChild(opt);
@@ -783,6 +789,16 @@ function openCakeDetail(id, opener) {
   markCartButtons(detail, loadCart(cartStorage()));
   dialog.showModal();
   dialog.scrollTop = 0;
+}
+
+// Home: the closing slide + footer fill exactly one screen, so the slide is sized from the footer's real height
+// (it changes with the screen width as the legal line wraps).
+if (document.body.classList.contains("page-home")) {
+  const footer = document.querySelector(".site-footer");
+  const sync = () => document.body.style.setProperty("--footer-h", footer.offsetHeight + "px");
+  sync();
+  addEventListener("resize", sync);
+  if (document.fonts) document.fonts.ready.then(sync);
 }
 
 // ---------- Motion ----------
