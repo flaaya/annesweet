@@ -10,8 +10,10 @@
   --on-ink: #FFFFFF;        /* 19.0:1 on ink */
   --ink-hover: #4A1D18;     /* white on it 13.6:1 */
   --muted: #6B5A52;         /* 5.8:1 on paper, 6.3:1 on linen */
-  --wm-anne: #DB6A97;       /* pastel pink: soft on purpose, about 2.5:1 on the blush bar (it is the logo wordmark, not body text) */
-  --wm-sweet: #5E9AD6;      /* pastel blue, about 2.4:1 on the blush bar */
+  --wm-anne: #FFC4EB;       /* Blush Pop */
+  --wm-anne-edge: #E07DB8;  /* a deeper pink outline, so the pastel still reads on the pale bar */
+  --wm-sweet: #89D2DC;      /* Frosted Blue */
+  --wm-sweet-edge: #4DA3B0;
   --nav-hover: #A3274D;     /* nav link hover on the blush bar 5.1:1 */
   --blush: #F7D4DC;         /* "date." swatch and the nav count; ink on it 14.2:1 */
   --hair: rgba(41, 10, 8, .22);   /* resting underline (decorative) */
@@ -44,8 +46,10 @@
     --ink-hover: #E4D9C2;   /* paper on it 13.0:1 */
     --muted: #C2B2A2;       /* 8.9:1 on paper, 7.8:1 on linen */
     --blush: #5C3640;       /* swatch behind parchment text 8.6:1 */
-    --wm-anne: #FFB3CE;
-    --wm-sweet: #A9D3FF;
+    --wm-anne: #FFC4EB;
+    --wm-sweet: #89D2DC;
+    --wm-anne-edge: transparent; /* the dark bar needs no outline */
+    --wm-sweet-edge: transparent;
     --nav-hover: #F7B8C9;   /* nav link hover on the plum bar 6:1 */
     --hair: rgba(246, 240, 225, .28);
     --field-line: rgba(246, 240, 225, .4); /* 3.4:1 on linen */
@@ -837,5 +841,5 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 .date-note { margin: var(--s3) 0 0; color: var(--muted); font-size: var(--fs-small); }
 
 /* The name in two colours: Anne pink, Sweet blue */
-.wm-anne { color: var(--wm-anne); }
-.wm-sweet { color: var(--wm-sweet); }
+.wm-anne { color: var(--wm-anne); -webkit-text-stroke: 1px var(--wm-anne-edge); paint-order: stroke fill; }
+.wm-sweet { color: var(--wm-sweet); -webkit-text-stroke: 1px var(--wm-sweet-edge); paint-order: stroke fill; }
