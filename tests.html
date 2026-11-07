@@ -144,6 +144,92 @@ test("addToOrder keeps an existing 3", () => {
   assertEqual(c.querySelector("input").value, "3");
 });
 
+function formFixture(patch) {
+  document.getElementById("form-fixture")?.remove();
+  const v = Object.assign({ name: "Maria", contact: " 0917 123 4567 ", dateNeeded: earliestDate(new Date()) }, patch);
+  const c = document.createElement("div");
+  c.id = "form-fixture";
+  c.innerHTML = '<form novalidate>' +
+    ["name", "contact", "fbName", "occasion", "message", "flavor", "design", "address", "notes", "website"].map(n =>
+      '<input id="' + n + '" name="' + n + '"><p class="error" id="err-' + n + '"></p>').join("") +
+    '<input id="customSize" name="size"><p class="error" id="err-customSize"></p>' +
+    '<input id="dateNeeded" name="dateNeeded" type="date"><p class="error" id="err-dateNeeded"></p>' +
+    '<div id="order-lines"></div><p class="error" id="err-items"></p><p class="error" id="err-custom"></p>' +
+    '<input type="radio" name="fulfillment" value="pickup" checked><p class="error" id="err-fulfillment"></p>' +
+    '<button type="submit">Send</button></form>';
+  document.body.appendChild(c);
+  const f = c.firstChild;
+  renderOrderLines([item("t", "cake")], f.querySelector("#order-lines"));
+  Object.entries(v).forEach(([k, val]) => { f.elements[k].value = val; });
+  f.querySelector('input[name="qty"]').value = "2";
+  return f;
+}
+
+test("collectOrder keeps only qty > 0 lines", () => {
+  const f = formFixture();
+  const o = collectOrder(f);
+  assertEqual(o.items, [{ id: "t", name: "t", size: "Box", qty: 2 }]);
+  f.querySelector('input[name="qty"]').value = "0";
+  assertEqual(collectOrder(f).items, []);
+});
+test("collectOrder trims and normalizes contact", () => {
+  const f = formFixture({ name: "  Maria ", notes: " hi " });
+  const o = collectOrder(f);
+  assertEqual([o.name, o.contact, o.notes, o.fulfillment, o.website], ["Maria", "09171234567", "hi", "pickup", ""]);
+});
+const fetchReturning = body => async () => ({ json: async () => body });
+const withUrl = async fn => { APPS_SCRIPT_URL = "https://example.test/x"; try { await fn(); } finally { APPS_SCRIPT_URL = ""; } };
+test("submitOrder true on {ok:true}", () => withUrl(async () =>
+  assertEqual(await submitOrder(ok, fetchReturning({ ok: true })), true)));
+test("submitOrder false on {ok:false}", () => withUrl(async () =>
+  assertEqual(await submitOrder(ok, fetchReturning({ ok: false, error: "x" })), false)));
+test("submitOrder false on network error", () => withUrl(async () =>
+  assertEqual(await submitOrder(ok, async () => { throw new Error("offline"); }), false)));
+test("submitOrder false on unparseable response", () => withUrl(async () =>
+  assertEqual(await submitOrder(ok, async () => ({ json: async () => { throw new Error("bad"); } })), false)));
+test("submitOrder false and no fetch when APPS_SCRIPT_URL is empty", async () => {
+  let calls = 0;
+  assertEqual(await submitOrder(ok, async () => { calls++; return { json: async () => ({ ok: true }) }; }), false);
+  assertEqual(calls, 0);
+});
+test("send button disabled while sending", () => withUrl(async () => {
+  const f = formFixture();
+  let calls = 0;
+  initOrderForm(f, () => { calls++; return new Promise(() => {}); });
+  const b = f.querySelector("button");
+  b.click(); b.click();
+  assertEqual(calls, 1);
+  assertEqual(b.disabled, true);
+}));
+test("invalid submit shows errors, flags field, focuses it, sends nothing", () => withUrl(async () => {
+  const f = formFixture({ name: "" });
+  let calls = 0;
+  initOrderForm(f, async () => { calls++; });
+  f.querySelector("button").click();
+  assertEqual(calls, 0);
+  assertEqual(f.querySelector("#err-name").textContent.length > 0, true);
+  assertEqual(f.querySelector("#name").getAttribute("aria-invalid"), "true");
+  assertEqual(document.activeElement === f.querySelector("#name"), true);
+  f.querySelector("#name").value = "Maria";
+  f.querySelector("button").click();
+  assertEqual(f.querySelector("#err-name").textContent, "");
+  assertEqual(f.querySelector("#name").hasAttribute("aria-invalid"), false);
+}));
+test("failure shows alert and keeps fields; success replaces form", () => withUrl(async () => {
+  let f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: false }));
+  f.querySelector("button").click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(f.querySelector('[role="alert"]').textContent.startsWith("Couldn't send — please try again or message us on Facebook"), true);
+  assertEqual(f.querySelector("button").disabled, false);
+  assertEqual(f.querySelector("#name").value, "Maria");
+  f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: true }));
+  f.querySelector("button").click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(document.getElementById("form-fixture").textContent.includes("Thanks! Annesweet will message you to confirm your order and payment."), true);
+}));
+
 runTests();
 </script>
 </body></html>

@@ -1,3 +1,7 @@
+// let, not const: tests point it at a fake URL. Filled in Task 6.
+let APPS_SCRIPT_URL = "";
+const FACEBOOK_URL = "https://facebook.com/";
+
 function formatPrice(item) {
   const prices = item.sizes.map(s => s.price);
   const low = Math.min(...prices);
@@ -106,6 +110,7 @@ function renderOrderLines(menu, container) {
     input.name = "qty";
     input.dataset.id = item.id;
     input.dataset.size = size.label;
+    input.setAttribute("aria-describedby", "err-items");
     label.append(span, input);
     container.appendChild(label);
   }));
@@ -120,6 +125,92 @@ function addToOrder(id) {
   input.focus({ preventScroll: true });
 }
 
+function collectOrder(form) {
+  const f = n => form.elements[n];
+  const t = n => f(n).value.trim();
+  const items = [...form.querySelectorAll('input[name="qty"]')]
+    .map(i => ({ id: i.dataset.id, name: (MENU.find(m => m.id === i.dataset.id) || {}).name || i.dataset.id,
+      size: i.dataset.size, qty: Number(i.value) }))
+    .filter(i => i.qty > 0);
+  const checked = form.querySelector('input[name="fulfillment"]:checked');
+  return {
+    name: t("name"), contact: normalizePhone(t("contact")), fbName: t("fbName"), items,
+    custom: { occasion: t("occasion"), size: t("size"), flavor: t("flavor"), message: t("message"), design: t("design") },
+    fulfillment: checked ? checked.value : "", address: t("address"), dateNeeded: f("dateNeeded").value,
+    notes: t("notes"), website: f("website").value,
+  };
+}
+
+async function submitOrder(order, fetchFn = fetch) {
+  if (!APPS_SCRIPT_URL) return false;
+  try {
+    // text/plain keeps this a "simple" request, so Apps Script needs no CORS preflight
+    const res = await fetchFn(APPS_SCRIPT_URL, {
+      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(order) });
+    return (await res.json()).ok === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// error key (from validateOrder) -> the element to flag and focus
+const ERROR_ORDER = ["name", "contact", "fbName", "items", "custom", "fulfillment", "address", "dateNeeded", "notes"];
+function errorTarget(form, key) {
+  if (key === "items") return form.querySelector('input[name="qty"]');
+  if (key === "custom") return form.querySelector("#occasion");
+  if (key === "fulfillment") return form.querySelector('input[name="fulfillment"]');
+  return form.querySelector("#" + key);
+}
+
+function showErrors(form, errors) {
+  form.querySelectorAll(".error").forEach(p => { p.textContent = ""; });
+  form.querySelectorAll("[aria-invalid]").forEach(e => e.removeAttribute("aria-invalid"));
+  let first = null;
+  ERROR_ORDER.forEach(key => {
+    if (!errors[key]) return;
+    form.querySelector("#err-" + key).textContent = errors[key];
+    const target = errorTarget(form, key);
+    if (key === "items") form.querySelectorAll('input[name="qty"]').forEach(i => i.setAttribute("aria-invalid", "true"));
+    else target.setAttribute("aria-invalid", "true");
+    first = first || target;
+  });
+  if (first) first.focus();
+  return !!first;
+}
+
+function initOrderForm(form, fetchFn = fetch) {
+  const button = form.querySelector('button[type="submit"]');
+  const label = button.textContent;
+  const fail = document.createElement("p");
+  fail.setAttribute("role", "alert");
+  fail.hidden = true;
+  fail.append("Couldn't send — please try again or message us on Facebook ");
+  const link = document.createElement("a");
+  link.href = FACEBOOK_URL;
+  link.textContent = "Facebook";
+  fail.append(link);
+  button.before(fail);
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (button.disabled) return;
+    fail.hidden = true;
+    const order = collectOrder(form);
+    if (showErrors(form, validateOrder(order, new Date()))) return;
+    button.disabled = true;
+    button.textContent = "Sending…";
+    if (await submitOrder(order, fetchFn)) {
+      const done = document.createElement("p");
+      done.setAttribute("role", "status");
+      done.textContent = "Thanks! Annesweet will message you to confirm your order and payment.";
+      form.replaceWith(done);
+    } else {
+      fail.hidden = false;
+      button.disabled = false;
+      button.textContent = label;
+    }
+  });
+}
+
 // tests.html has no page sections, so only wire up where they exist
 if (document.getElementById("cakes")) {
   renderMenu(MENU, document);
@@ -130,6 +221,7 @@ if (document.getElementById("cakes")) {
 }
 if (document.getElementById("order-lines")) {
   renderOrderLines(MENU, document.getElementById("order-lines"));
+  initOrderForm(document.getElementById("order-form"));
   const date = document.getElementById("dateNeeded");
   date.min = earliestDate(new Date());
   const address = document.getElementById("address-field");
