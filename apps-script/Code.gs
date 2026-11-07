@@ -56,7 +56,8 @@ function validateOrder_(order, todayStr) {
 // Stops Sheets from running user text as a formula
 function safeCell_(value) {
   const s = String(value == null ? "" : value);
-  return /^[=+\-@]/.test(s) ? "'" + s : s;
+  // Trim first: a leading space or tab before =/+/-/@ (e.g. " =1+1") must still be escaped, not just the bare character
+  return /^[=+\-@]/.test(s.trim()) ? "'" + s : s;
 }
 
 function itemsText_(order) {
@@ -297,6 +298,8 @@ function selfCheck() {
   assert(!bad({ fbName: null, notes: undefined }), "null/missing optionals ok");
   assert(safeCell_("=HYPERLINK(\"x\")") === "'=HYPERLINK(\"x\")", "formula escaped");
   assert(safeCell_("+639171234567") === "'+639171234567", "plus escaped");
+  assert(safeCell_(" =1+1") === "'" + " =1+1", "leading-space formula escaped");
+  assert(safeCell_("\t=1+1") === "'" + "\t=1+1", "leading-tab formula escaped");
   assert(localContact_("+63 917-123 4567") === "09171234567" && localContact_("0917 123 4567") === "09171234567", "contact stored as 09...");
   assert(orderRow_({ ...sample, contact: "+639171234567" }, now)[2] === "09171234567", "+63 contact stored as 09 in row");
   assert(formatTelegramMessage_({ ...sample, contact: "+639171234567" }).includes("Maria Santos, 09171234567"), "+63 contact as 09 in message");
