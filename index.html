@@ -3,156 +3,144 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Annesweet</title>
-<meta name="description" content="Annesweet: home-baked cakes and pastries, made to order. Order 3 days ahead.">
-<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1E0D13" media="(prefers-color-scheme: dark)">
+<title>Annesweet: birthday cakes baked at home</title>
+<meta name="description" content="Cakes and pastries made from scratch in our home kitchen, never frozen. Order at least 3 days ahead.">
+<meta name="theme-color" content="#F6F0E1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1B120E" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Figtree:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
+<link rel="icon" type="image/png" href="photos/favicon.png">
+<link rel="apple-touch-icon" href="photos/apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
+<script>if(!matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("js-anim");setTimeout(function(){if(!window.__motion)document.documentElement.classList.remove("js-anim")},4000)}</script>
 <script src="menu.js" defer></script>
 <script src="script.js" defer></script>
 </head>
-<body>
+<body class="page-home">
 <header class="topbar">
-  <a href="#top" class="topbar-mark">annesweet</a>
-  <nav aria-label="Main">
-    <a href="#menu">Menu</a>
-    <a href="#order">Order</a>
-  </nav>
-</header>
-<main id="top">
-  <section class="hero">
-    <img src="photos/sample-chocolate-cake.svg" alt="A whole Annesweet cake" width="1200" height="900">
-    <div class="hero-text">
-      <h1 class="wordmark">Annesweet<span class="visually-hidden"> — home-baked cakes and pastries</span></h1>
-      <p class="lead">Home-baked cakes and pastries, made to order. Order 3 days ahead.</p>
-      <a href="#order" class="btn">Order a cake</a>
+  <div class="wrap">
+    <a href="index.html" class="topbar-mark"><img class="logo-mark" src="photos/logo.png" alt="" width="40" height="40">annesweet</a>
+    <nav aria-label="Main">
+      <a href="index.html" aria-current="page"><span class="nav-label">Home</span></a>
+      <a href="menu.html"><span class="nav-label">Menu</span></a>
+      <a href="custom.html"><span class="nav-label">Custom cakes</span></a>
+      <a href="ideas.html"><span class="nav-label">Ideas</span></a>
+    </nav>
+    <div class="topbar-icons">
+      <button type="button" class="icon-btn" id="search-toggle" aria-label="Search the menu" aria-expanded="false" aria-controls="search-panel">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="wish-toggle" aria-label="Saved cakes, 0" aria-expanded="false" aria-controls="wish-panel">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span class="nav-count" id="wish-count" hidden></span>
+      </button>
+      <a href="order.html" class="icon-btn" id="cart-link" aria-label="Your order, 0 items">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M5 8h14l-1 12H6L5 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 10V7a3 3 0 0 1 6 0v3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="nav-count" id="nav-count" hidden></span>
+      </a>
     </div>
-  </section>
-  <section aria-labelledby="h-best">
-    <h2 id="h-best">Bestsellers</h2>
-    <div id="bestsellers" class="rail"></div>
-  </section>
-  <section id="menu" aria-labelledby="h-cakes">
-    <h2 id="h-cakes">Cakes</h2>
-    <div id="cakes" class="rows"></div>
-  </section>
-  <section class="menu-more" aria-labelledby="h-pastries">
-    <h2 id="h-pastries">Pastries</h2>
-    <div id="pastries" class="rows"></div>
-  </section>
-  <section class="band" aria-labelledby="h-custom">
-    <div class="band-inner">
-      <h2 id="h-custom">Custom cakes</h2>
-      <p>Birthdays, christenings, weddings: tell us the occasion and we will design the cake with you. Please order a week ahead.</p>
-      <a href="#custom-cake" class="btn">Describe your cake</a>
-    </div>
-  </section>
-  <section aria-labelledby="h-how">
-    <h2 id="h-how">How to order</h2>
-    <ol class="steps">
-      <li><h3>Send a request</h3><p>Choose from the menu or describe a custom design in the form below. Everything is baked fresh to order, so we need 3 days (a week for custom cakes).</p></li>
-      <li><h3>We message you</h3><p>We confirm the details and the price with you and arrange payment.</p></li>
-      <li><h3>Pick up or get it delivered</h3><p>Collect it from us, or we book a Lalamove or Grab rider for you. The rider fee is paid by the customer.</p></li>
-    </ol>
-  </section>
-  <section id="order" aria-labelledby="h-order">
-  <h2 id="h-order">Order form</h2>
-  <div class="order-layout">
-  <form id="order-form" novalidate>
-    <div class="field">
-      <label for="name">Your name</label>
-      <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required aria-describedby="err-name">
-      <p class="error" id="err-name"></p>
-    </div>
-    <div class="field">
-      <label for="contact">Mobile number</label>
-      <input id="contact" name="contact" type="tel" maxlength="30" autocomplete="tel" placeholder="0917 123 4567" required aria-describedby="err-contact">
-      <p class="error" id="err-contact"></p>
-    </div>
-    <div class="field">
-      <label for="fbName">Facebook name (optional)</label>
-      <input id="fbName" name="fbName" type="text" maxlength="100" aria-describedby="err-fbName">
-      <p class="error" id="err-fbName"></p>
-    </div>
-    <fieldset class="field">
-      <legend>Items</legend>
-      <div id="order-lines"></div>
-      <p class="error" id="err-items"></p>
-    </fieldset>
-    <fieldset class="field" id="custom-cake" aria-describedby="err-custom">
-      <legend>Custom cake (optional)</legend>
-    <div class="field">
-      <label for="occasion">Occasion</label>
-      <input id="occasion" name="occasion" type="text" maxlength="300" aria-describedby="err-occasion">
-      <p class="error" id="err-occasion"></p>
-    </div>
-    <div class="field">
-      <label for="customSize">Size or servings</label>
-      <input id="customSize" name="size" type="text" maxlength="300" aria-describedby="err-customSize">
-      <p class="error" id="err-customSize"></p>
-    </div>
-    <div class="field">
-      <label for="flavor">Flavor</label>
-      <input id="flavor" name="flavor" type="text" maxlength="300" aria-describedby="err-flavor">
-      <p class="error" id="err-flavor"></p>
-    </div>
-    <div class="field">
-      <label for="message">Message on cake</label>
-      <input id="message" name="message" type="text" maxlength="300" aria-describedby="err-message">
-      <p class="error" id="err-message"></p>
-    </div>
-    <div class="field">
-      <label for="design">Design description</label>
-      <textarea id="design" name="design" maxlength="300" rows="3" aria-describedby="err-design"></textarea>
-      <p class="error" id="err-design"></p>
-    </div>
-      <p class="error" id="err-custom"></p>
-    </fieldset>
-    <fieldset class="field" aria-describedby="err-fulfillment">
-      <legend>Pickup or delivery</legend>
-      <label><input type="radio" name="fulfillment" value="pickup" checked> Pickup</label>
-      <label><input type="radio" name="fulfillment" value="delivery"> Delivery</label>
-      <p class="error" id="err-fulfillment"></p>
-    </fieldset>
-    <div id="address-field" hidden>
-      <p>Delivery is via Lalamove/Grab. The rider fee is paid by the customer.</p>
-    <div class="field">
-      <label for="address">Delivery address</label>
-      <textarea id="address" name="address" maxlength="300" rows="2" aria-describedby="err-address"></textarea>
-      <p class="error" id="err-address"></p>
-    </div>
-    </div>
-    <div class="field">
-      <label for="dateNeeded">Date needed</label>
-      <input id="dateNeeded" name="dateNeeded" type="date" required aria-describedby="err-dateNeeded">
-      <p class="error" id="err-dateNeeded"></p>
-    </div>
-    <div class="field">
-      <label for="notes">Notes (optional)</label>
-      <textarea id="notes" name="notes" maxlength="500" rows="3" aria-describedby="err-notes"></textarea>
-      <p class="error" id="err-notes"></p>
-    </div>
-    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <button type="submit" class="btn">Send order request</button>
-  </form>
-  <aside class="order-summary" aria-labelledby="h-summary">
-    <h3 id="h-summary">Your order</h3>
-    <ul id="order-summary-lines"></ul>
-    <p class="summary-note">Prices are confirmed by message.</p>
-  </aside>
   </div>
+  <div class="topbar-panel" id="search-panel" role="search" hidden>
+    <label for="site-search">Search the menu</label>
+    <input type="search" id="site-search" autocomplete="off" placeholder="Ube, chocolate, cupcakes">
+    <p class="visually-hidden" id="search-status" aria-live="polite"></p>
+    <ul class="mini-list" id="search-results"></ul>
+  </div>
+  <div class="topbar-panel" id="wish-panel" hidden tabindex="-1" aria-labelledby="h-wish" role="region">
+    <h2 id="h-wish">Saved cakes</h2>
+    <ul class="mini-list" id="wish-list"></ul>
+  </div>
+</header>
+<main>
+  <section class="hero">
+    <div class="hero-plate"><img class="hero-photo reveal" src="photos/draft/hero.jpg" alt="A tall layered cake with a pink drip, cream swirls and cherries, on a pink cake stand" width="1600" height="1200" fetchpriority="high"></div>
+    <div class="hero-text">
+      <h1>Birthday cakes, baked at home for your <mark><em>date.</em></mark></h1>
+      <p class="lead">Cakes and pastries made from scratch in our home kitchen, never frozen. Order at least 3 days ahead, then pick up or we'll book a Lalamove for you.</p>
+      <div class="actions">
+        <a href="order.html" class="btn">Order a cake <span aria-hidden="true">&rarr;</span></a>
+        <a href="menu.html" class="text-link">See the menu</a>
+      </div>
+      <p class="trust">Baked to order, one family table at a time.</p>
+      <ul class="hero-facts">
+        <li><strong>3 days</strong><span>Order at least this far ahead</span></li>
+        <li><strong>Pickup or delivery</strong><span>We book the Lalamove for you</span></li>
+        <li><strong>Custom designs</strong><span>For any celebration</span></li>
+      </ul>
+    </div>
+  </section>
+  <section class="section slide" aria-labelledby="h-best">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="h-best">Most-ordered cakes</h2>
+        <a href="menu.html" class="text-link">See the full menu</a>
+      </div>
+      <div id="bestsellers" class="best"></div>
+    </div>
+  </section>
+  <section class="section slide duo" aria-labelledby="h-custom">
+    <div class="wrap duo-grid">
+      <div class="plate duo-photo reveal"><img src="photos/draft/custom.jpg" alt="A tall pink cake decorated with glazed cherries and sprinkles on a white stand" width="1000" height="1000" loading="lazy"></div>
+      <div class="duo-text">
+        <div class="duo-custom">
+          <h2 id="h-custom">Custom cakes for your celebration</h2>
+          <p>Tell us the occasion, the size and the look you have in mind, and we'll design it with you.</p>
+          <a href="custom.html" class="btn">See custom cakes <span aria-hidden="true">&rarr;</span></a>
+        </div>
+        <div class="duo-how">
+          <h2 id="h-how">How ordering works</h2>
+          <ol class="steps">
+            <li><div><h3>Send a request</h3><p>Pick from the menu or describe a custom cake. Choose your date, at least 3 days away.</p></div></li>
+            <li><div><h3>We confirm by message</h3><p>We message you on Messenger or by text with the final price and how to pay.</p></div></li>
+            <li><div><h3>Pick up or get it delivered</h3><p>Collect it from us, or we book a Lalamove or Grab rider. The rider fee is paid by you.</p></div></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section closing" aria-labelledby="h-closing">
+    <div class="wrap closing-grid">
+      <div class="closing-text">
+        <h2 id="h-closing">Order at least<br> 3 days ahead</h2>
+        <p>Tell us what you'd like and the date you need it. No payment yet. We'll message you to confirm.</p>
+        <a href="order.html" class="btn">Order a cake <span aria-hidden="true">&rarr;</span></a>
+      </div>
+      <ul class="closing-photos" aria-label="More from the menu">
+        <li><a href="menu.html"><img src="photos/draft/strawberry-cake.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Strawberry Cake</span></a></li>
+        <li><a href="menu.html"><img src="photos/draft/red-velvet-cake.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Red Velvet Cake</span></a></li>
+        <li><a href="menu.html"><img src="photos/draft/ensaymada.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Ensaymada</span></a></li>
+        <li><a href="menu.html"><img src="photos/draft/cupcakes.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Cupcakes</span></a></li>
+      </ul>
+    </div>
   </section>
 </main>
-<a href="#order" class="order-bar" id="order-bar" hidden></a>
+<a href="order.html" class="order-bar" id="order-bar" hidden></a>
 <p id="add-status" class="visually-hidden" aria-live="polite"></p>
-<footer>
-  <p>Contact: 09XX XXX XXXX</p>
-  <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>
-  <p>Pickup area: to be announced</p>
-  <p>Please order at least 3 days ahead (a week for custom cakes).</p>
+<footer class="site-footer">
+  <div class="wrap footer-row">
+    <div class="footer-brand">
+      <a href="index.html" class="footer-mark"><img class="logo-mark" src="photos/logo.png" alt="" width="40" height="40">annesweet</a>
+      <p>Cakes and pastries baked to order in our home kitchen.</p>
+      <p class="footer-copy">© 2026 Annesweet. All rights reserved.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="menu.html">Menu</a>
+      <a href="custom.html">Custom cakes</a>
+      <a href="order.html">Order request</a>
+    </nav>
+    <div class="footer-contact">
+      <p>Contact: 09XX XXX XXXX</p>
+      <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>
+      <p>Pickup area: to be announced</p>
+    </div>
+    <img class="footer-logo" src="photos/logo.png" alt="" width="96" height="96">
+  </div>
+  <div class="wrap legal">
+    <p><a href="terms.html">Terms and conditions</a></p>
+    <p><a href="privacy.html">Privacy policy</a></p>
+    <p>Draft photos: Unsplash</p>
+  </div>
 </footer>
 </body>
 </html>

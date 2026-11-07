@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Order request · Annesweet</title>
+<meta name="description" content="Send Annesweet an order request. No payment yet; we'll message you to confirm.">
+<meta name="theme-color" content="#F6F0E1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1B120E" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
+<link rel="icon" type="image/png" href="photos/favicon.png">
+<link rel="apple-touch-icon" href="photos/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+<script src="menu.js" defer></script>
+<script src="script.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a href="index.html" class="topbar-mark">annesweet</a>
+    <nav aria-label="Main">
+      <a href="menu.html"><span class="nav-label">Menu</span></a>
+      <a href="custom.html"><span class="nav-label">Custom cakes</span></a>
+      <a href="ideas.html"><span class="nav-label">Ideas</span></a>
+      <a href="order.html" aria-current="page"><span class="nav-label">Order</span><span class="nav-count" id="nav-count" hidden></span></a>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="page-head">
+    <div class="wrap">
+      <h1>Order request</h1>
+      <p class="lead">No payment yet. We'll message you to confirm.</p>
+    </div>
+  </section>
+  <section id="order" class="order-page" aria-label="Order form">
+    <div class="wrap">
+  <form id="order-form" novalidate>
+    <fieldset class="field items">
+      <legend>Items</legend>
+      <div id="order-lines"></div>
+      <p class="error" id="err-items"></p>
+    </fieldset>
+    <div class="field">
+      <label for="name">Your name</label>
+      <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required aria-describedby="err-name">
+      <p class="error" id="err-name"></p>
+    </div>
+    <div class="field">
+      <label for="contact">Mobile number</label>
+      <input id="contact" name="contact" type="tel" maxlength="30" autocomplete="tel" placeholder="0917 123 4567" required aria-describedby="err-contact">
+      <p class="error" id="err-contact"></p>
+    </div>
+    <div class="field">
+      <label for="fbName">Facebook name (optional)</label>
+      <input id="fbName" name="fbName" type="text" maxlength="100" aria-describedby="err-fbName">
+      <p class="error" id="err-fbName"></p>
+    </div>
+    <fieldset class="field" id="custom-cake" aria-describedby="err-custom">
+      <legend>Custom cake (optional)</legend>
+    <div class="field">
+      <label for="occasion">Occasion</label>
+      <input id="occasion" name="occasion" type="text" maxlength="300" aria-describedby="err-occasion">
+      <p class="error" id="err-occasion"></p>
+    </div>
+    <div class="field">
+      <label for="customSize">Size or servings</label>
+      <input id="customSize" name="size" type="text" maxlength="300" aria-describedby="err-customSize">
+      <p class="error" id="err-customSize"></p>
+    </div>
+    <div class="field">
+      <label for="flavor">Flavor</label>
+      <input id="flavor" name="flavor" type="text" maxlength="300" aria-describedby="err-flavor">
+      <p class="error" id="err-flavor"></p>
+    </div>
+    <div class="field">
+      <label for="message">Message on cake</label>
+      <input id="message" name="message" type="text" maxlength="300" aria-describedby="err-message">
+      <p class="error" id="err-message"></p>
+    </div>
+    <div class="field">
+      <label for="design">Design description</label>
+      <textarea id="design" name="design" maxlength="300" rows="3" aria-describedby="err-design"></textarea>
+      <p class="error" id="err-design"></p>
+    </div>
+      <p class="error" id="err-custom"></p>
+    </fieldset>
+    <fieldset class="field" aria-describedby="err-fulfillment">
+      <legend>Pickup or delivery</legend>
+      <label><input type="radio" name="fulfillment" value="pickup" checked> Pickup</label>
+      <label><input type="radio" name="fulfillment" value="delivery"> Delivery</label>
+      <p class="error" id="err-fulfillment"></p>
+    </fieldset>
+    <div id="address-field" hidden>
+      <p>Delivery is via Lalamove/Grab. The rider fee is paid by the customer.</p>
+    <div class="field">
+      <label for="address">Delivery address</label>
+      <textarea id="address" name="address" maxlength="300" rows="2" aria-describedby="err-address"></textarea>
+      <p class="error" id="err-address"></p>
+    </div>
+    </div>
+    <div class="field">
+      <label for="dateNeeded">Date needed</label>
+      <input id="dateNeeded" name="dateNeeded" type="date" required aria-describedby="err-dateNeeded">
+      <p class="error" id="err-dateNeeded"></p>
+    </div>
+    <div class="field">
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" name="notes" maxlength="500" rows="3" aria-describedby="err-notes"></textarea>
+      <p class="error" id="err-notes"></p>
+    </div>
+    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <aside class="order-summary" aria-labelledby="h-summary">
+      <h2 id="h-summary">Your order</h2>
+      <ul id="order-summary-lines"></ul>
+      <p class="summary-note">Prices are confirmed by message.</p>
+    </aside>
+    <button type="submit" class="btn">Send order request</button>
+  </form>
+    </div>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="footer-mark">annesweet</a>
+      <p>Cakes and pastries baked to order in our home kitchen.</p>
+      <p class="footer-copy">© 2026 Annesweet. All rights reserved.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="menu.html">Menu</a>
+      <a href="custom.html">Custom cakes</a>
+      <a href="order.html">Order request</a>
+    </nav>
+    <div class="footer-contact">
+      <p>Contact: 09XX XXX XXXX</p>
+      <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>
+      <p>Pickup area: to be announced</p>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <p>Please order at least 3 days ahead (a week for custom cakes).</p>
+    <p>Draft photos: Unsplash. To be replaced with Annesweet's own cakes.</p>
+    <div class="legal"><p><a href="terms.html">Terms and conditions</a></p><p><a href="privacy.html">Privacy policy</a></p></div>
+  </div>
+</footer>
+</body>
+</html>

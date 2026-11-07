@@ -35,7 +35,7 @@ function fixture() {
   return c;
 }
 const item = (id, category, extra) => Object.assign({
-  id, name: "Sample " + id, category, description: "d", photo: "photos/x.svg",
+  id, name: id, category, description: "d", photo: "photos/x.svg",
   sizes: [{ label: "Box", price: 100 }], tags: [], soldOut: false }, extra);
 
 test("formatPrice single size", () =>
@@ -60,9 +60,9 @@ test("sold out card has class sold-out, a Sold out label and no Add button", () 
   renderMenu([item("a", "cake", { soldOut: true }), item("b", "cake")], c);
   const cards = c.querySelectorAll("#cakes .card");
   assertEqual(cards[0].classList.contains("sold-out"), true);
-  assertEqual(cards[0].querySelector("button"), null);
+  assertEqual(cards[0].querySelector(".order-btn"), null);
   assertEqual(cards[0].querySelector(".sold-out-label").textContent, "Sold out");
-  assertEqual(cards[1].querySelector("button").dataset.id, "b");
+  assertEqual(cards[1].querySelector(".order-btn").dataset.id, "b");
 });
 test("each card shows its tags as .tag elements", () => {
   const c = fixture();
@@ -76,6 +76,72 @@ test("card text is not parsed as HTML", () => {
 });
 test("MENU ids are unique", () =>
   assertEqual(new Set(MENU.map(i => i.id)).size, MENU.length));
+test("every cake is offered in 8-inch and 10-inch; pastries are boxes", () => {
+  const sizes = i => i.sizes.map(s => s.label);
+  assertEqual(MENU.filter(i => i.category === "cake").every(i => sizes(i).join() === "8-inch,10-inch"), true);
+  assertEqual(MENU.filter(i => i.category === "pastry").every(i => sizes(i).join() === "Box of 6"), true);
+});
+test("detailFacts only lists lines that are filled in", () => {
+  assertEqual(detailFacts({ ingredients: "Flour, eggs", contains: "  ", calories: undefined }), [{ label: "Ingredients", text: "Flour, eggs" }]);
+  assertEqual(detailFacts({}), []);
+});
+test("makeCakeDetail: name, description, one radio per size, Add for the first size", () => {
+  const d = makeCakeDetail(item("t", "cake", { name: "Test Cake", description: "Tasty.", sizes: [{ label: "8-inch", price: 900 }, { label: "10-inch", price: 1200 }] }));
+  const add = d.querySelector(".order-btn");
+  assertEqual([d.querySelector("h2").textContent, d.querySelector(".cake-detail-desc").textContent, d.querySelectorAll(".size-picker input").length,
+    d.querySelector(".cake-detail-price").textContent, add.dataset.id, add.dataset.size, add.textContent],
+    ["Test Cake", "Tasty.", 2, "₱900", "t", "8-inch", "Add"]);
+  assertEqual(d.querySelector(".cake-detail-facts"), null);
+});
+test("makeCakeDetail: choosing 10-inch changes the price and what Add adds", () => {
+  const d = makeCakeDetail(item("t", "cake", { sizes: [{ label: "8-inch", price: 900 }, { label: "10-inch", price: 1200 }] }));
+  const ten = d.querySelectorAll(".size-picker input")[1];
+  ten.checked = true;
+  ten.dispatchEvent(new Event("change"));
+  assertEqual([d.querySelector(".cake-detail-price").textContent, d.querySelector(".order-btn").dataset.size], ["₱1,200", "10-inch"]);
+});
+test("makeCakeDetail: facts show when filled in; sold out has no Add", () => {
+  const d = makeCakeDetail(item("t", "cake", { ingredients: "Flour, eggs", soldOut: true }));
+  assertEqual([d.querySelector("dt").textContent, d.querySelector("dd").textContent, d.querySelector(".order-btn"), d.querySelector(".sold-out-label").textContent],
+    ["Ingredients", "Flour, eggs", null, "Sold out right now"]);
+});
+test("clicking a card's name opens the detail window with that cake; Esc-style close hands focus back", () => {
+  const c = document.createElement("div");
+  document.body.appendChild(c);
+  const card = makeCard(MENU[0]);
+  c.appendChild(card);
+  const opener = card.querySelector(".card-open");
+  openCakeDetail(MENU[0].id, opener);
+  const dlg = document.getElementById("cake-dialog");
+  assertEqual([dlg.open, dlg.querySelector("h2").textContent, opener.dataset.open], [true, MENU[0].name, MENU[0].id]);
+  dlg.close();
+  assertEqual(dlg.open, false);
+  c.remove();
+});
+test("splitWords wraps each word, keeps nested tags and the text, and only runs once", () => {
+  const h = document.createElement("h1");
+  h.innerHTML = "Birthday cakes <mark><em>date.</em></mark>";
+  const n = splitWords(h);
+  assertEqual([n, h.querySelectorAll(".wi").length, h.textContent, !!h.querySelector("mark em .w .wi")], [3, 3, "Birthday cakes date.", true]);
+  assertEqual(splitWords(h), 0);
+});
+test("initMotion leaves the page alone without html.js-anim", () => {
+  const before = document.querySelectorAll(".rv, .rv-words, .rv-photo").length;
+  initMotion();
+  assertEqual(document.querySelectorAll(".rv, .rv-words, .rv-photo").length, before);
+});
+test("the 10-inch costs more than the 8-inch", () =>
+  assertEqual(MENU.filter(i => i.category === "cake").every(i => i.sizes[1].price > i.sizes[0].price), true));
+test("renderMenu skips lists the page doesn't have", () => {
+  const c = document.createElement("div");
+  c.innerHTML = '<div id="bestsellers"></div>';
+  renderMenu([item("a", "cake", { tags: ["Bestseller"] }), item("b", "pastry")], c);
+  assertEqual(c.querySelectorAll("#bestsellers .card").length, 1);
+});
+test("MENU names and photos are final, not samples", () => {
+  assertEqual(MENU.filter(i => /sample/i.test(i.name + i.description + i.photo)).length, 0);
+  assertEqual(MENU.every(i => i.photo === "photos/draft/" + i.id + ".jpg"), true);
+});
 test("MENU has 10 cakes and 4 pastries", () => {
   assertEqual(MENU.filter(i => i.category === "cake").length, 10);
   assertEqual(MENU.filter(i => i.category === "pastry").length, 4);
@@ -135,6 +201,122 @@ test("renderOrderLines skips sold out and makes one line per size", () => {
   assertEqual(ins.map(i => i.dataset.id + "/" + i.dataset.size), ["t/6-inch", "t/8-inch", "u/Box"]);
   assertEqual(ins.every(i => i.name === "qty" && i.type === "number" && i.min === "0" && i.max === "50" && i.value === "0"), true);
 });
+test("renderOrderLines groups lines under Cakes and Pastries, each labelled with a photo", () => {
+  const c = linesFixture([twoSizes, item("u", "pastry")]);
+  assertEqual(c.querySelectorAll(".line-group h3, .line-group h2").length, 0); // no heading skip under the h1
+  assertEqual([...c.querySelectorAll(".line-group .line-head")].map(h => h.textContent), ["Cakes", "Pastries"]);
+  assertEqual([...c.querySelectorAll(".line-group")].map(g => g.querySelectorAll("input").length), [2, 1]);
+  const line = c.querySelector(".order-line");
+  assertEqual(line.querySelector("label").htmlFor, line.querySelector("input").id);
+  assertEqual(line.closest(".order-item").querySelector("img").alt, "");
+});
+test("renderOrderLines shows each item once, with one sub-row per size", () => {
+  const c = linesFixture([twoSizes, item("u", "pastry")]);
+  const rows = [...c.querySelectorAll(".order-item")];
+  assertEqual(rows.map(r => [r.querySelector(".item-name").textContent, r.querySelectorAll(".order-line").length]), [["t", 2], ["u", 1]]);
+  assertEqual(rows[0].querySelectorAll("img").length, 1);
+  assertEqual(rows[0].querySelector(".order-line label").textContent, "t, 6-inch · ₱1");
+});
+test("renderOrderLines leaves out a category with nothing available", () => {
+  const c = linesFixture([item("u", "pastry")]);
+  assertEqual([...c.querySelectorAll(".line-group .line-head")].map(h => h.textContent), ["Pastries"]);
+});
+test("stepQty clamps 0 to 50 and fires input and change", () => {
+  const i = document.createElement("input");
+  const seen = [];
+  i.addEventListener("input", () => seen.push("input"));
+  i.addEventListener("change", () => seen.push("change"));
+  i.value = "0"; stepQty(i, -1);
+  assertEqual(i.value, "0");
+  i.value = "50"; stepQty(i, 1);
+  assertEqual(i.value, "50");
+  i.value = ""; stepQty(i, 1);
+  assertEqual(i.value, "1");
+  assertEqual(seen, ["input", "change", "input", "change", "input", "change"]);
+});
+test("− / + buttons step the line's number input", () => {
+  const c = linesFixture([twoSizes]);
+  const [minus, plus] = c.querySelectorAll(".order-line")[1].querySelectorAll("button");
+  plus.click(); plus.click(); minus.click();
+  assertEqual([...c.querySelectorAll("input")].map(i => i.value), ["0", "1"]);
+  assertEqual([minus.type, plus.getAttribute("aria-label")], ["button", "One more t, 8-inch"]);
+});
+
+const fakeStorage = (init = {}) => ({ data: { ...init }, getItem(k) { return k in this.data ? this.data[k] : null; },
+  setItem(k, v) { this.data[k] = String(v); } });
+const blockedStorage = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+test("saveCart then loadCart round-trips", () => {
+  const s = fakeStorage();
+  saveCart(s, { "ube-cake|8-inch": 2 });
+  assertEqual(loadCart(s), { "ube-cake|8-inch": 2 });
+});
+test("loadCart is empty for nothing saved, bad JSON, bad quantities or blocked storage", () => {
+  assertEqual(loadCart(fakeStorage()), {});
+  assertEqual(loadCart(fakeStorage({ "annesweet-cart": "{oops" })), {});
+  assertEqual(loadCart(fakeStorage({ "annesweet-cart": '{"a|x":0,"b|x":1.5,"c|x":51,"d|x":"2","e|x":3}' })), { "e|x": 3 });
+  assertEqual(loadCart(blockedStorage), {});
+  assertEqual(loadCart(null), {});
+  saveCart(blockedStorage, { "a|x": 1 }); // must not throw
+  saveCart(null, { "a|x": 1 });
+});
+test("cartCount adds up quantities", () => {
+  assertEqual(cartCount({}), 0);
+  assertEqual(cartCount({ "a|x": 2, "b|y": 3 }), 5);
+});
+test("addToCart raises the first size 0 to 1, keeps a set quantity, ignores sold out and unknown", () => {
+  const menu = [twoSizes, item("s", "cake", { soldOut: true })];
+  assertEqual(addToCart({}, "t", menu), { "t|6-inch": 1 });
+  assertEqual(addToCart({ "t|6-inch": 3 }, "t", menu), { "t|6-inch": 3 });
+  assertEqual(addToCart({}, "s", menu), {});
+  assertEqual(addToCart({}, "nope", menu), {});
+});
+test("cartLines turns the cart into named summary lines", () =>
+  assertEqual(cartLines({ "t|8-inch": 2 }, [twoSizes]), [{ id: "t", name: "t", size: "8-inch", qty: 2 }]));
+test("cartLines drops stale entries: unknown item, unknown size, sold out", () =>
+  assertEqual(cartLines({ "gone|x": 1, "t|10-inch": 1, "s|Box": 2, "t|6-inch": 1 }, [twoSizes, item("s", "cake", { soldOut: true })]),
+    [{ id: "t", name: "t", size: "6-inch", qty: 1 }]));
+test("addToCart takes a size, falling back to the first for an unknown one", () => {
+  assertEqual(addToCart({}, "t", [twoSizes], "8-inch"), { "t|8-inch": 1 });
+  assertEqual(addToCart({}, "t", [twoSizes], "12-inch"), { "t|6-inch": 1 });
+});
+test("restoreCart fills saved quantities and cartFromForm reads them back", () => {
+  const c = linesFixture([twoSizes, item("u", "pastry")]);
+  restoreCart(c, { "t|8-inch": 4, "gone|x": 1 });
+  assertEqual([...c.querySelectorAll("input")].map(i => i.value), ["0", "4", "0"]);
+  assertEqual(cartFromForm(c), { "t|8-inch": 4 });
+});
+test("addToOrder with no form on the page saves to the cart", () => {
+  document.getElementById("lines-fixture")?.remove();
+  const s = fakeStorage();
+  addToOrder("ube-cake", true, s);
+  addToOrder("ube-cake", false, s);
+  assertEqual(loadCart(s), { "ube-cake|8-inch": 1 });
+});
+test("addToOrder with a size saves that size", () => {
+  document.getElementById("lines-fixture")?.remove();
+  const s = fakeStorage();
+  addToOrder("chocolate-cake", false, s, "8-inch");
+  assertEqual(loadCart(s), { "chocolate-cake|8-inch": 1 });
+});
+test("order page: restores the saved cart on load and saves each quantity change", () => {
+  document.getElementById("page-fixture")?.remove();
+  const c = document.createElement("div");
+  c.id = "page-fixture";
+  c.innerHTML = '<form><div id="order-lines"></div></form>';
+  document.body.appendChild(c);
+  try {
+    const s = fakeStorage();
+    saveCart(s, { "ube-cake|8-inch": 3, "chocolate-cake|8-inch": 1 });
+    const form = c.firstChild;
+    initOrderPage(form, s);
+    const qty = (id, size) => form.querySelector('input[data-id="' + id + '"][data-size="' + size + '"]');
+    assertEqual([qty("ube-cake", "8-inch").value, qty("chocolate-cake", "8-inch").value, qty("chocolate-cake", "10-inch").value], ["3", "1", "0"]);
+    qty("ube-cake", "8-inch").parentNode.querySelector(".step:last-child").click();
+    qty("chocolate-cake", "8-inch").value = "0";
+    qty("chocolate-cake", "8-inch").dispatchEvent(new Event("input", { bubbles: true }));
+    assertEqual(loadCart(s), { "ube-cake|8-inch": 4 });
+  } finally { c.remove(); }
+});
 test("addToOrder sets 0 to 1", () => {
   const c = linesFixture([twoSizes]);
   addToOrder("t");
@@ -152,13 +334,38 @@ test("addToOrder on a wide screen focuses the line", () => {
   addToOrder("t", true);
   assertEqual(document.activeElement === c.querySelector("input"), true);
 });
-test("markAdded shows Added, announces it, then reverts", async () => {
+test("markAdded shows Added, announces it, then settles on In your order", async () => {
   const btn = document.createElement("button"), live = document.createElement("p");
-  btn.textContent = "Add";
+  btn.textContent = btn.dataset.label = "Add";
+  btn.dataset.name = "Ube Cake";
   markAdded(btn, live, "Ube Cake");
-  assertEqual([btn.textContent, live.textContent], ["Added", "Added Ube Cake to your order."]);
+  assertEqual([btn.textContent, live.textContent, btn.getAttribute("aria-label")], ["Added", "Added Ube Cake to your order.", "Added Ube Cake to your order"]);
   await new Promise(r => setTimeout(r, 1600));
-  assertEqual(btn.textContent, "Add");
+  assertEqual([btn.textContent, btn.classList.contains("in-cart"), btn.classList.contains("added"), btn.getAttribute("aria-label")],
+    ["In your order", true, false, "Ube Cake in your order"]);
+});
+test("multi-size items get one Add button per size; single-size items get Add", () => {
+  const c = fixture();
+  renderMenu([twoSizes, item("u", "pastry")], c);
+  const b = [...c.querySelectorAll("#cakes .order-btn")];
+  assertEqual(b.map(x => [x.textContent, x.dataset.id, x.dataset.size]), [["6-inch ₱1", "t", "6-inch"], ["8-inch ₱2", "t", "8-inch"]]);
+  assertEqual(b[1].getAttribute("aria-label"), "Add t, 8-inch to your order");
+  const u = c.querySelector("#pastries .order-btn");
+  assertEqual([u.textContent, u.dataset.size], ["Add", "Box"]);
+});
+test("markCartButtons shows In your order for sizes in the cart and resets the rest", () => {
+  const c = fixture();
+  renderMenu([twoSizes, item("u", "pastry")], c);
+  markCartButtons(c, { "t|8-inch": 1, "u|Box": 2 });
+  assertEqual([...c.querySelectorAll("#cakes .order-btn, #pastries .order-btn")].map(x => [x.textContent, x.classList.contains("in-cart")]),
+    [["6-inch ₱1", false], ["8-inch in your order", true], ["In your order", true]]);
+  // accessible name matches the visible "in your order" text
+  assertEqual([...c.querySelectorAll(".order-btn")].map(x => x.getAttribute("aria-label")),
+    ["Add t, 6-inch to your order", "t, 8-inch in your order", "u in your order"]);
+  markCartButtons(c, {});
+  assertEqual(c.querySelector("#pastries .order-btn").getAttribute("aria-label"), "Add u to your order");
+  assertEqual(c.querySelectorAll(".in-cart").length, 0);
+  assertEqual(c.querySelector("#pastries .order-btn").textContent, "Add");
 });
 test("addToOrder keeps an existing 3", () => {
   const c = linesFixture([twoSizes]);
@@ -260,7 +467,7 @@ test("send button disabled while sending", () => withUrl(async () => {
   const f = formFixture();
   let calls = 0;
   initOrderForm(f, () => { calls++; return new Promise(() => {}); });
-  const b = f.querySelector("button");
+  const b = f.querySelector('button[type="submit"]');
   b.click(); b.click();
   assertEqual(calls, 1);
   assertEqual(b.disabled, true);
@@ -269,29 +476,29 @@ test("invalid submit shows errors, flags field, focuses it, sends nothing", () =
   const f = formFixture({ name: "" });
   let calls = 0;
   initOrderForm(f, async () => { calls++; });
-  f.querySelector("button").click();
+  f.querySelector('button[type="submit"]').click();
   assertEqual(calls, 0);
   assertEqual(f.querySelector("#err-name").textContent.length > 0, true);
   assertEqual(f.querySelector("#name").getAttribute("aria-invalid"), "true");
   assertEqual(document.activeElement === f.querySelector("#name"), true);
   f.querySelector("#name").value = "Maria";
-  f.querySelector("button").click();
+  f.querySelector('button[type="submit"]').click();
   assertEqual(f.querySelector("#err-name").textContent, "");
   assertEqual(f.querySelector("#name").hasAttribute("aria-invalid"), false);
 }));
 test("failure shows alert and keeps fields; success replaces form", () => withUrl(async () => {
   let f = formFixture();
   initOrderForm(f, fetchReturning({ ok: false }));
-  f.querySelector("button").click();
+  f.querySelector('button[type="submit"]').click();
   await new Promise(r => setTimeout(r, 0));
-  assertEqual(f.querySelector('[role="alert"]').textContent.startsWith("Couldn't send — please try again or message us on Facebook"), true);
-  assertEqual(f.querySelector("button").disabled, false);
+  assertEqual(f.querySelector('[role="alert"]').textContent.startsWith("Couldn't send. Please try again or message us on Facebook"), true);
+  assertEqual(f.querySelector('button[type="submit"]').disabled, false);
   assertEqual(f.querySelector('[role="alert"] a').target, "_blank");
   assertEqual(f.querySelector("#name").value, "Maria");
 
   f = formFixture();
   initOrderForm(f, fetchReturning({ ok: true }));
-  f.querySelector("button").click();
+  f.querySelector('button[type="submit"]').click();
   await new Promise(r => setTimeout(r, 0));
   assertEqual(document.getElementById("form-fixture").textContent.includes("Thanks! Annesweet will message you to confirm your order and payment."), true);
 }));
@@ -306,20 +513,166 @@ test("successful send empties the summary and hides the bar", () => withUrl(asyn
     assertEqual(document.querySelector("#order-summary-lines").textContent, "2 × t (Box)");
     assertEqual(document.getElementById("order-bar").hidden, false);
     initOrderForm(f, fetchReturning({ ok: true }));
-    f.querySelector("button").click();
+    f.querySelector('button[type="submit"]').click();
     await new Promise(r => setTimeout(r, 0));
     assertEqual(document.querySelector("#order-summary-lines").textContent, "Nothing added yet.");
     assertEqual(document.getElementById("order-bar").hidden, true);
   } finally { ui.remove(); document.body.classList.remove("has-bar"); }
 }));
 
+test("successful send empties the saved cart", () => withUrl(async () => {
+  const s = fakeStorage();
+  saveCart(s, { "t|Box": 2 });
+  const f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: true }), s);
+  f.querySelector('button[type="submit"]').click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(loadCart(s), {});
+}));
+test("failed send keeps the saved cart", () => withUrl(async () => {
+  const s = fakeStorage();
+  saveCart(s, { "t|Box": 2 });
+  const f = formFixture();
+  initOrderForm(f, fetchReturning({ ok: false }), s);
+  f.querySelector('button[type="submit"]').click();
+  await new Promise(r => setTimeout(r, 0));
+  assertEqual(loadCart(s), { "t|Box": 2 });
+}));
+test("off the order page, the bar counts the saved cart", () => {
+  const ui = document.createElement("div");
+  ui.innerHTML = '<a id="order-bar" hidden></a><span id="nav-count" hidden></span>';
+  document.body.appendChild(ui);
+  try {
+    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"ube-cake|8-inch":2,"brownies|Box of 6":1}' }));
+    assertEqual([document.getElementById("order-bar").hidden, document.getElementById("order-bar").textContent,
+      document.getElementById("nav-count").textContent], [false, "3 items · Review order", "3 items in your order"]);
+    updateOrderUI(null, fakeStorage());
+    assertEqual([document.getElementById("order-bar").hidden, document.getElementById("nav-count").hidden], [true, true]);
+  } finally { ui.remove(); document.body.classList.remove("has-bar"); }
+});
+
 test("failure alert shows the server's reason", () => withUrl(async () => {
   const f = formFixture();
   initOrderForm(f, fetchReturning({ ok: false, error: "Date must be at least 3 days ahead." }));
-  f.querySelector("button").click();
+  f.querySelector('button[type="submit"]').click();
   await new Promise(r => setTimeout(r, 0));
   assertEqual(f.querySelector('[role="alert"]').textContent.includes("Date must be at least 3 days ahead."), true);
 }));
+
+// ---------- Home round 5: size picker, wishlist, search ----------
+const picked = (opts) => makeCard(item("t", "cake", { name: "Choc", sizes: [{ label: "8-inch", price: 950 }, { label: "10-inch", price: 1250 }] }), opts);
+test("default makeCard has no picker or heart, and a stable item id", () => {
+  const card = picked();
+  assertEqual([card.id, card.querySelector(".size-picker"), card.querySelector(".wish-btn"), card.querySelectorAll(".order-btn").length],
+    ["item-t", null, null, 2]);
+});
+test("picker card: one radio per size, first checked, one Add and the first size's price", () => {
+  const card = picked({ picker: true });
+  const radios = [...card.querySelectorAll('.size-picker input[type="radio"]')];
+  assertEqual(radios.map(r => [r.value, r.checked]), [["8-inch", true], ["10-inch", false]]);
+  assertEqual(card.querySelector(".size-picker").getAttribute("role"), "radiogroup");
+  assertEqual(new Set(radios.map(r => r.name)).size, 1);
+  const add = card.querySelectorAll(".order-btn");
+  assertEqual([add.length, add[0].textContent, add[0].dataset.size, card.querySelector(".price").textContent], [1, "Add", "8-inch", "₱950"]);
+  assertEqual(add[0].getAttribute("aria-label"), "Add Choc, 8-inch to your order");
+  assertEqual(card.classList.contains("multi"), false);
+});
+test("picker is skipped for single-size and sold-out items", () => {
+  assertEqual(makeCard(item("u", "cake"), { picker: true }).querySelector(".size-picker"), null);
+  assertEqual(makeCard(item("s", "cake", { soldOut: true, sizes: twoSizes.sizes }), { picker: true }).querySelector(".size-picker"), null);
+});
+test("switching size updates the price, Add's size and its label", () => {
+  const card = picked({ picker: true });
+  const r = card.querySelectorAll(".size-picker input")[1];
+  r.checked = true;
+  r.dispatchEvent(new Event("change", { bubbles: true }));
+  const add = card.querySelector(".order-btn");
+  assertEqual([card.querySelector(".price").textContent, add.dataset.size, add.getAttribute("aria-label")],
+    ["₱1,250", "10-inch", "Add Choc, 10-inch to your order"]);
+});
+test("Add after switching writes id|selectedSize, and In your order follows the chosen size", () => {
+  document.getElementById("lines-fixture")?.remove();
+  const card = makeCard(MENU.find(m => m.id === "chocolate-cake"), { picker: true });
+  const r = card.querySelectorAll(".size-picker input")[1];
+  r.checked = true;
+  r.dispatchEvent(new Event("change"));
+  const add = card.querySelector(".order-btn");
+  const s = fakeStorage();
+  addToOrder(add.dataset.id, false, s, add.dataset.size);
+  assertEqual(loadCart(s), { "chocolate-cake|10-inch": 1 });
+  markCartButtons(card, loadCart(s));
+  assertEqual([add.textContent, add.getAttribute("aria-label")], ["In your order", "Chocolate Cake, 10-inch in your order"]);
+  add.dataset.size = "8-inch";
+  markCartButtons(card, loadCart(s));
+  assertEqual(add.textContent, "Add");
+});
+test("Chocolate Cake comes in 8-inch and 10-inch", () =>
+  assertEqual(MENU.find(m => m.id === "chocolate-cake").sizes, [{ label: "8-inch", price: 950 }, { label: "10-inch", price: 1250 }]));
+test("heart option adds a Save toggle on the photo", () => {
+  const h = picked({ heart: true }).querySelector(".photo .wish-btn");
+  assertEqual([h.type, h.dataset.wish, h.getAttribute("aria-label"), h.getAttribute("aria-pressed")], ["button", "t", "Save Choc", "false"]);
+});
+test("home bestsellers get the picker and hearts; menu lists don't", () => {
+  const c = fixture();
+  renderMenu([twoSizes, item("b", "cake", { tags: ["Bestseller"], sizes: twoSizes.sizes })], c);
+  assertEqual([c.querySelectorAll("#bestsellers .size-picker").length, c.querySelectorAll("#bestsellers .wish-btn").length,
+    c.querySelectorAll("#cakes .size-picker, #cakes .wish-btn").length], [1, 1, 0]);
+});
+test("wishlist round-trips, keeps only known ids once, survives bad or blocked storage", () => {
+  const s = fakeStorage();
+  saveWishlist(s, ["ube-cake", "cookies"]);
+  assertEqual([s.data["annesweet-wishlist"], loadWishlist(s)], ['["ube-cake","cookies"]', ["ube-cake", "cookies"]]);
+  assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": '["ube-cake","gone","ube-cake",3]' })), ["ube-cake"]);
+  assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": "{oops" })), []);
+  assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": '{"a":1}' })), []);
+  assertEqual([loadWishlist(fakeStorage()), loadWishlist(blockedStorage), loadWishlist(null)], [[], [], []]);
+  saveWishlist(blockedStorage, ["ube-cake"]); // must not throw
+  saveWishlist(null, ["ube-cake"]);
+});
+test("toggleWish adds then removes", () => {
+  assertEqual(toggleWish(["a"], "b"), ["a", "b"]);
+  assertEqual(toggleWish(["a", "b"], "a"), ["b"]);
+});
+test("renderWishlist: empty note, else photo, name, price, Add to order (first size) and Remove", () => {
+  const ul = document.createElement("ul");
+  renderWishlist([], ul);
+  assertEqual(ul.textContent, "Tap the heart on a cake to save it here.");
+  renderWishlist(["t", "s"], ul, [twoSizes, item("s", "cake", { soldOut: true })]);
+  const [a, b] = ul.children;
+  assertEqual([a.querySelector(".mini-name").textContent, a.querySelector(".mini-price").textContent, a.querySelectorAll("img").length], ["t", "From ₱1", 1]);
+  const add = a.querySelector(".order-btn");
+  assertEqual([add.textContent, add.dataset.id, add.dataset.size, add.getAttribute("aria-label")], ["Add to order", "t", "6-inch", "Add t, 6-inch to your order"]);
+  assertEqual([a.querySelector(".remove-btn").dataset.unwish, a.querySelector(".remove-btn").getAttribute("aria-label")], ["t", "Remove t from saved cakes"]);
+  assertEqual([b.querySelector(".order-btn"), b.querySelector(".mini-price").textContent], [null, "Sold out"]);
+});
+test("searchMenu matches name or description, ignores case, needs a query, keeps sold-out items", () => {
+  const menu = [item("a", "cake", { name: "Ube Cake", description: "halaya" }), item("b", "cake", { name: "Banana", description: "Walnuts", soldOut: true }),
+    item("c", "pastry", { name: "Cookies", description: "chips" })];
+  assertEqual(searchMenu("UBE", menu).map(i => i.id), ["a"]);
+  assertEqual(searchMenu("walnut", menu).map(i => i.id), ["b"]);
+  assertEqual(searchMenu("  ", menu), []);
+  assertEqual(searchMenu("zzz", menu), []);
+  assertEqual(searchMenu("chocolate").map(i => i.id).includes("chocolate-cake"), true);
+});
+test("renderSearch links each result to its menu card and announces the count", () => {
+  const ul = document.createElement("ul"), status = document.createElement("p");
+  renderSearch([twoSizes, item("s", "cake", { soldOut: true, name: "<b>S</b>" })], ul, status);
+  const links = [...ul.querySelectorAll("a.mini-item")];
+  assertEqual(links.map(l => l.getAttribute("href")), ["menu.html#item-t", "menu.html#item-s"]);
+  assertEqual([links[1].querySelector(".mini-price").textContent, links[1].querySelector("b"), status.textContent], ["Sold out", null, "2 cakes and pastries found."]);
+  renderSearch([], ul, status);
+  assertEqual([ul.children.length, status.textContent], [0, ""]);
+});
+test("cart link's accessible name counts the order", () => {
+  assertEqual([cartLinkLabel(0), cartLinkLabel(1), cartLinkLabel(3)], ["Your order, 0 items", "Your order, 1 item", "Your order, 3 items"]);
+  const ui = document.createElement("div");
+  ui.innerHTML = '<a id="cart-link"><span id="nav-count" hidden></span></a>';
+  document.body.appendChild(ui);
+  try {
+    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"ube-cake|8-inch":2}' }));
+    assertEqual(document.getElementById("cart-link").getAttribute("aria-label"), "Your order, 2 items");
+  } finally { ui.remove(); }
+});
 
 runTests();
 </script>
