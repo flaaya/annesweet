@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Annesweet: birthday cakes baked at home</title>
 <meta name="description" content="Cakes and pastries made from scratch in our home kitchen, never frozen. Order at least 3 days ahead.">
-<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1E0D13" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F6F0E1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1B120E" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Figtree:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
 <link rel="stylesheet" href="style.css">
 <script src="menu.js" defer></script>
 <script src="script.js" defer></script>
@@ -27,20 +27,18 @@
 </header>
 <main>
   <section class="hero">
-    <div class="wrap">
-      <img class="hero-photo" src="photos/draft/hero.jpg" alt="A tall layered cake with a pink drip, cream swirls and cherries, on a pink cake stand" width="1600" height="1200" fetchpriority="high">
-      <div class="hero-text">
-        <h1>Birthday cakes, baked at home for your date.</h1>
-        <p class="lead">Cakes and pastries made from scratch in our home kitchen, never frozen. Order at least 3 days ahead, then pick up or we'll book a Lalamove for you.</p>
-        <div class="actions">
-          <a href="order.html" class="btn">Order a cake</a>
-          <a href="menu.html" class="text-link">See the menu</a>
-        </div>
-        <p class="trust">Baked to order, one family table at a time.</p>
+    <div class="hero-plate"><img class="hero-photo reveal" src="photos/draft/hero.jpg" alt="A tall layered cake with a pink drip, cream swirls and cherries, on a pink cake stand" width="1600" height="1200" fetchpriority="high"></div>
+    <div class="hero-text">
+      <h1>Birthday cakes, baked at home for your <mark><em>date.</em></mark></h1>
+      <p class="lead">Cakes and pastries made from scratch in our home kitchen, never frozen. Order at least 3 days ahead, then pick up or we'll book a Lalamove for you.</p>
+      <div class="actions">
+        <a href="order.html" class="btn">Order a cake <span aria-hidden="true">&rarr;</span></a>
+        <a href="menu.html" class="text-link">See the menu</a>
       </div>
+      <p class="trust">Baked to order, one family table at a time.</p>
     </div>
   </section>
-  <section class="section surface" aria-labelledby="h-best">
+  <section class="section" aria-labelledby="h-best">
     <div class="wrap">
       <div class="section-head">
         <h2 id="h-best">Most-ordered cakes</h2>
@@ -49,35 +47,37 @@
       <div id="bestsellers" class="best"></div>
     </div>
   </section>
-  <section class="band" aria-labelledby="h-custom">
-    <img class="band-photo" src="photos/draft/custom.jpg" alt="A tall pink cake decorated with glazed cherries and sprinkles on a white stand" width="1000" height="1000" loading="lazy">
-    <div class="band-text">
-      <h2 id="h-custom">Custom cakes for your celebration</h2>
-      <p>Tell us the occasion, the size and the look you have in mind, and we'll design it with you.</p>
-      <a href="custom.html" class="btn">See custom cakes</a>
+  <section class="section band" aria-labelledby="h-custom">
+    <div class="wrap">
+      <div class="plate reveal"><img class="band-photo" src="photos/draft/custom.jpg" alt="A tall pink cake decorated with glazed cherries and sprinkles on a white stand" width="1000" height="1000" loading="lazy"></div>
+      <div class="band-text">
+        <h2 id="h-custom">Custom cakes for your celebration</h2>
+        <p>Tell us the occasion, the size and the look you have in mind, and we'll design it with you.</p>
+        <a href="custom.html" class="btn">See custom cakes <span aria-hidden="true">&rarr;</span></a>
+      </div>
     </div>
   </section>
   <section class="section how" aria-labelledby="h-how">
     <div class="wrap">
-      <div>
-        <h2 id="h-how" class="section-head">How ordering works</h2>
-        <ol class="steps">
-          <li><div><h3>Send a request</h3><p>Pick from the menu or describe a custom cake. Choose your date, at least 3 days away.</p></div></li>
-          <li><div><h3>We confirm by message</h3><p>We message you on Messenger or by text with the final price and how to pay.</p></div></li>
-          <li><div><h3>Pick up or get it delivered</h3><p>Collect it from us, or we book a Lalamove or Grab rider. The rider fee is paid by you.</p></div></li>
-        </ol>
+      <div class="how-head">
+        <h2 id="h-how">How ordering works</h2>
+        <div class="how-photos">
+          <img class="reveal" src="photos/draft/kitchen.jpg" alt="Eggs cracked into a mound of flour beside a whisk and sieve" width="1000" height="1000" loading="lazy">
+          <img class="reveal" src="photos/draft/cake-box.jpg" alt="A white cake box with a window, holding four frosted cupcakes" width="1000" height="1000" loading="lazy">
+        </div>
       </div>
-      <div class="how-photos">
-        <img src="photos/draft/kitchen.jpg" alt="Eggs cracked into a mound of flour beside a whisk and sieve" width="1000" height="1000" loading="lazy">
-        <img src="photos/draft/cake-box.jpg" alt="A white cake box with a window, holding four frosted cupcakes" width="1000" height="1000" loading="lazy">
-      </div>
+      <ol class="steps">
+        <li><div><h3>Send a request</h3><p>Pick from the menu or describe a custom cake. Choose your date, at least 3 days away.</p></div></li>
+        <li><div><h3>We confirm by message</h3><p>We message you on Messenger or by text with the final price and how to pay.</p></div></li>
+        <li><div><h3>Pick up or get it delivered</h3><p>Collect it from us, or we book a Lalamove or Grab rider. The rider fee is paid by you.</p></div></li>
+      </ol>
     </div>
   </section>
-  <section class="section surface closing" aria-labelledby="h-closing">
+  <section class="section closing" aria-labelledby="h-closing">
     <div class="wrap">
-      <h2 id="h-closing">Order at least 3 days ahead</h2>
+      <h2 id="h-closing">Order at least<br> 3 days ahead</h2>
       <p>Tell us what you'd like and the date you need it. No payment yet. We'll message you to confirm.</p>
-      <a href="order.html" class="btn">Order a cake</a>
+      <a href="order.html" class="btn">Order a cake <span aria-hidden="true">&rarr;</span></a>
     </div>
   </section>
 </main>

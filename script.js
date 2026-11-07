@@ -39,7 +39,8 @@ function makeCard(item) {
       btn.dataset.id = item.id;
       btn.dataset.size = size.label;
       btn.dataset.label = label;
-      btn.setAttribute("aria-label", "Add " + item.name + (multi ? ", " + size.label : "") + " to your order");
+      btn.dataset.name = item.name;
+      btn.setAttribute("aria-label", "Add " + itemLabel(btn) + " to your order");
       actions.appendChild(btn);
     });
     side.appendChild(actions);
@@ -62,9 +63,12 @@ function productImg(item, alt) {
 
 // "In your order" state for Add buttons whose id|size is in the cart (skips one still showing "Added")
 const inCartLabel = btn => btn.dataset.label === "Add" ? "In your order" : btn.dataset.size + " in your order";
+// "Chocolate Cake, 8-inch": the accessible name always contains the visible text of the button
+const itemLabel = btn => (btn.dataset.name || "") + (btn.dataset.label === "Add" ? "" : ", " + btn.dataset.size);
 function setInCart(btn, on) {
   btn.classList.toggle("in-cart", on);
   btn.textContent = on ? inCartLabel(btn) : btn.dataset.label;
+  btn.setAttribute("aria-label", on ? itemLabel(btn) + " in your order" : "Add " + itemLabel(btn) + " to your order");
 }
 function markCartButtons(container, cart) {
   container.querySelectorAll(".order-btn:not(.added)").forEach(btn =>
@@ -260,6 +264,7 @@ function addToOrder(id, wide = isWide(), storage = cartStorage(), size) {
 // Feedback for Add: "Added" on the button for 1.5s, announced through a live region, then "In your order"
 function markAdded(btn, live, name) {
   btn.textContent = "Added";
+  btn.setAttribute("aria-label", "Added " + itemLabel(btn) + " to your order");
   btn.classList.add("added", "in-cart");
   if (live) live.textContent = "Added " + name + " to your order.";
   clearTimeout(btn._addedTimer);

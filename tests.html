@@ -281,10 +281,12 @@ test("addToOrder on a wide screen focuses the line", () => {
 test("markAdded shows Added, announces it, then settles on In your order", async () => {
   const btn = document.createElement("button"), live = document.createElement("p");
   btn.textContent = btn.dataset.label = "Add";
+  btn.dataset.name = "Ube Cake";
   markAdded(btn, live, "Ube Cake");
-  assertEqual([btn.textContent, live.textContent], ["Added", "Added Ube Cake to your order."]);
+  assertEqual([btn.textContent, live.textContent, btn.getAttribute("aria-label")], ["Added", "Added Ube Cake to your order.", "Added Ube Cake to your order"]);
   await new Promise(r => setTimeout(r, 1600));
-  assertEqual([btn.textContent, btn.classList.contains("in-cart"), btn.classList.contains("added")], ["In your order", true, false]);
+  assertEqual([btn.textContent, btn.classList.contains("in-cart"), btn.classList.contains("added"), btn.getAttribute("aria-label")],
+    ["In your order", true, false, "Ube Cake in your order"]);
 });
 test("multi-size items get one Add button per size; single-size items get Add", () => {
   const c = fixture();
@@ -301,7 +303,11 @@ test("markCartButtons shows In your order for sizes in the cart and resets the r
   markCartButtons(c, { "t|8-inch": 1, "u|Box": 2 });
   assertEqual([...c.querySelectorAll("#cakes .order-btn, #pastries .order-btn")].map(x => [x.textContent, x.classList.contains("in-cart")]),
     [["6-inch ₱1", false], ["8-inch in your order", true], ["In your order", true]]);
+  // accessible name matches the visible "in your order" text
+  assertEqual([...c.querySelectorAll(".order-btn")].map(x => x.getAttribute("aria-label")),
+    ["Add t, 6-inch to your order", "t, 8-inch in your order", "u in your order"]);
   markCartButtons(c, {});
+  assertEqual(c.querySelector("#pastries .order-btn").getAttribute("aria-label"), "Add u to your order");
   assertEqual(c.querySelectorAll(".in-cart").length, 0);
   assertEqual(c.querySelector("#pastries .order-btn").textContent, "Add");
 });

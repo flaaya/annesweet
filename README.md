@@ -35,7 +35,7 @@ Open each file in any text editor. Use "find" (Ctrl+F or Cmd+F) to locate the te
 | `photos/draft/` | Every `.jpg` | Real photos of Annesweet's cakes (see below) |
 | All four pages | `Draft photos: Unsplash. To be replaced with Annesweet's own cakes.` (footer) | Delete this line once the real photos are in |
 
-The colors are set at the top of `style.css` (`--accent: #B8325A;` is the main pink).
+The colors are set at the top of `style.css`: `--paper` (the cream page), `--linen` (photo plates), `--ink: #290A08` (text and the dark button) and `--blush` (the one pink touch). The dark-mode versions sit just below them.
 
 **Photos.** The pictures in `photos/draft/` are free stand-ins from Unsplash (listed in `photos/draft/SOURCES.txt`), not Annesweet's cakes. Replace each one with a real photo **using the same file name**, and nothing else needs changing:
 - `hero.jpg`: the big picture on Home (shown landscape on phones, square on computers)
