@@ -1,6 +1,6 @@
 // let, not const: tests point it at a fake URL (the live Apps Script web app).
 let APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzI5RXQW_9z6wYngBTt81_Pv9dLtXWO0WylyjwIx8fUlJaIL4J91AnAuWMixHQAnq9f/exec";
-const FACEBOOK_URL = "https://facebook.com/";
+const FACEBOOK_URL = "https://www.facebook.com/annesweetph";
 
 function formatPrice(item) {
   const prices = item.sizes.map(s => s.price);

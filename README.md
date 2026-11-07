@@ -40,6 +40,7 @@ Open each file in any text editor. Use "find" (Ctrl+F or Cmd+F) to locate the te
 | `photos/logo.png`, `photos/favicon.png`, `photos/apple-touch-icon.png` | The Annesweet logo (a circular crop of the AnneSweet badge: chef, ribbon, "Bespoke cakes and cupcakes") and the small browser-tab icon made from it | A larger or cleaner file of the logo if you have one: save it with the **same names** (logo 240x240 or bigger, favicon 64x64, apple-touch-icon 180x180) |
 | `menu.js` | Every cake's `10-inch` price (the 8-inch price is the old single price; each 10-inch price is about 30% more, rounded, and is a draft) | The real 10-inch prices. Pastries stay as a box of 6 |
 | `terms.html` | Each `<!-- OWNER: confirm ... -->` note | Decide the deposit/payment rule, the cancellation and refund policy, and what to say about allergens; rewrite the sentence under each note, then delete the note |
+| `care.html` | Each `<!-- OWNER: confirm ... -->` note | Cake care and pickup page: confirm the pickup days, hours and meeting spot, the arrival steps, and the storage advice (fridge time, serve time, how many days); edit the text, then delete the note |
 | `privacy.html` | `<!-- OWNER: confirm the site is hosted on GitHub Pages -->` | Keep the sentence if the site is on GitHub Pages; change the host name if not |
 
 The colors are set at the top of `style.css`: `--paper` (the cream page), `--linen` (photo plates), `--ink: #290A08` (text and the dark button) and `--blush` (the one pink touch). The dark-mode versions sit just below them.
