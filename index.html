@@ -10,19 +10,46 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
+<link rel="icon" type="image/png" href="photos/favicon.png">
+<link rel="apple-touch-icon" href="photos/apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
+<script>if(!matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("js-anim");setTimeout(function(){if(!window.__motion)document.documentElement.classList.remove("js-anim")},4000)}</script>
 <script src="menu.js" defer></script>
 <script src="script.js" defer></script>
 </head>
-<body>
+<body class="page-home">
 <header class="topbar">
   <div class="wrap">
-    <a href="index.html" class="topbar-mark" aria-current="page">annesweet</a>
+    <a href="index.html" class="topbar-mark"><img class="logo-mark" src="photos/logo.png" alt="" width="40" height="40">annesweet</a>
     <nav aria-label="Main">
+      <a href="index.html" aria-current="page"><span class="nav-label">Home</span></a>
       <a href="menu.html"><span class="nav-label">Menu</span></a>
       <a href="custom.html"><span class="nav-label">Custom cakes</span></a>
-      <a href="order.html"><span class="nav-label">Order</span><span class="nav-count" id="nav-count" hidden></span></a>
+      <a href="ideas.html"><span class="nav-label">Ideas</span></a>
     </nav>
+    <div class="topbar-icons">
+      <button type="button" class="icon-btn" id="search-toggle" aria-label="Search the menu" aria-expanded="false" aria-controls="search-panel">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="wish-toggle" aria-label="Saved cakes, 0" aria-expanded="false" aria-controls="wish-panel">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span class="nav-count" id="wish-count" hidden></span>
+      </button>
+      <a href="order.html" class="icon-btn" id="cart-link" aria-label="Your order, 0 items">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M5 8h14l-1 12H6L5 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 10V7a3 3 0 0 1 6 0v3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="nav-count" id="nav-count" hidden></span>
+      </a>
+    </div>
+  </div>
+  <div class="topbar-panel" id="search-panel" role="search" hidden>
+    <label for="site-search">Search the menu</label>
+    <input type="search" id="site-search" autocomplete="off" placeholder="Ube, chocolate, cupcakes">
+    <p class="visually-hidden" id="search-status" aria-live="polite"></p>
+    <ul class="mini-list" id="search-results"></ul>
+  </div>
+  <div class="topbar-panel" id="wish-panel" hidden tabindex="-1" aria-labelledby="h-wish" role="region">
+    <h2 id="h-wish">Saved cakes</h2>
+    <ul class="mini-list" id="wish-list"></ul>
   </div>
 </header>
 <main>
@@ -36,9 +63,14 @@
         <a href="menu.html" class="text-link">See the menu</a>
       </div>
       <p class="trust">Baked to order, one family table at a time.</p>
+      <ul class="hero-facts">
+        <li><strong>3 days</strong><span>Order at least this far ahead</span></li>
+        <li><strong>Pickup or delivery</strong><span>We book the Lalamove for you</span></li>
+        <li><strong>Custom designs</strong><span>For any celebration</span></li>
+      </ul>
     </div>
   </section>
-  <section class="section" aria-labelledby="h-best">
+  <section class="section slide" aria-labelledby="h-best">
     <div class="wrap">
       <div class="section-head">
         <h2 id="h-best">Most-ordered cakes</h2>
@@ -47,47 +79,50 @@
       <div id="bestsellers" class="best"></div>
     </div>
   </section>
-  <section class="section band" aria-labelledby="h-custom">
-    <div class="wrap">
-      <div class="plate reveal"><img class="band-photo" src="photos/draft/custom.jpg" alt="A tall pink cake decorated with glazed cherries and sprinkles on a white stand" width="1000" height="1000" loading="lazy"></div>
-      <div class="band-text">
-        <h2 id="h-custom">Custom cakes for your celebration</h2>
-        <p>Tell us the occasion, the size and the look you have in mind, and we'll design it with you.</p>
-        <a href="custom.html" class="btn">See custom cakes <span aria-hidden="true">&rarr;</span></a>
-      </div>
-    </div>
-  </section>
-  <section class="section how" aria-labelledby="h-how">
-    <div class="wrap">
-      <div class="how-head">
-        <h2 id="h-how">How ordering works</h2>
-        <div class="how-photos">
-          <img class="reveal" src="photos/draft/kitchen.jpg" alt="Eggs cracked into a mound of flour beside a whisk and sieve" width="1000" height="1000" loading="lazy">
-          <img class="reveal" src="photos/draft/cake-box.jpg" alt="A white cake box with a window, holding four frosted cupcakes" width="1000" height="1000" loading="lazy">
+  <section class="section slide duo" aria-labelledby="h-custom">
+    <div class="wrap duo-grid">
+      <div class="plate duo-photo reveal"><img src="photos/draft/custom.jpg" alt="A tall pink cake decorated with glazed cherries and sprinkles on a white stand" width="1000" height="1000" loading="lazy"></div>
+      <div class="duo-text">
+        <div class="duo-custom">
+          <h2 id="h-custom">Custom cakes for your celebration</h2>
+          <p>Tell us the occasion, the size and the look you have in mind, and we'll design it with you.</p>
+          <a href="custom.html" class="btn">See custom cakes <span aria-hidden="true">&rarr;</span></a>
+        </div>
+        <div class="duo-how">
+          <h2 id="h-how">How ordering works</h2>
+          <ol class="steps">
+            <li><div><h3>Send a request</h3><p>Pick from the menu or describe a custom cake. Choose your date, at least 3 days away.</p></div></li>
+            <li><div><h3>We confirm by message</h3><p>We message you on Messenger or by text with the final price and how to pay.</p></div></li>
+            <li><div><h3>Pick up or get it delivered</h3><p>Collect it from us, or we book a Lalamove or Grab rider. The rider fee is paid by you.</p></div></li>
+          </ol>
         </div>
       </div>
-      <ol class="steps">
-        <li><div><h3>Send a request</h3><p>Pick from the menu or describe a custom cake. Choose your date, at least 3 days away.</p></div></li>
-        <li><div><h3>We confirm by message</h3><p>We message you on Messenger or by text with the final price and how to pay.</p></div></li>
-        <li><div><h3>Pick up or get it delivered</h3><p>Collect it from us, or we book a Lalamove or Grab rider. The rider fee is paid by you.</p></div></li>
-      </ol>
     </div>
   </section>
   <section class="section closing" aria-labelledby="h-closing">
-    <div class="wrap">
-      <h2 id="h-closing">Order at least<br> 3 days ahead</h2>
-      <p>Tell us what you'd like and the date you need it. No payment yet. We'll message you to confirm.</p>
-      <a href="order.html" class="btn">Order a cake <span aria-hidden="true">&rarr;</span></a>
+    <div class="wrap closing-grid">
+      <div class="closing-text">
+        <h2 id="h-closing">Order at least<br> 3 days ahead</h2>
+        <p>Tell us what you'd like and the date you need it. No payment yet. We'll message you to confirm.</p>
+        <a href="order.html" class="btn">Order a cake <span aria-hidden="true">&rarr;</span></a>
+      </div>
+      <ul class="closing-photos" aria-label="More from the menu">
+        <li><a href="menu.html"><img src="photos/draft/strawberry-cake.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Strawberry Cake</span></a></li>
+        <li><a href="menu.html"><img src="photos/draft/red-velvet-cake.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Red Velvet Cake</span></a></li>
+        <li><a href="menu.html"><img src="photos/draft/ensaymada.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Ensaymada</span></a></li>
+        <li><a href="menu.html"><img src="photos/draft/cupcakes.jpg" alt="" width="1000" height="1000" loading="lazy"><span>Cupcakes</span></a></li>
+      </ul>
     </div>
   </section>
 </main>
 <a href="order.html" class="order-bar" id="order-bar" hidden></a>
 <p id="add-status" class="visually-hidden" aria-live="polite"></p>
 <footer class="site-footer">
-  <div class="wrap footer-grid">
-    <div>
-      <a href="index.html" class="footer-mark">annesweet</a>
+  <div class="wrap footer-row">
+    <div class="footer-brand">
+      <a href="index.html" class="footer-mark"><img class="logo-mark" src="photos/logo.png" alt="" width="40" height="40">annesweet</a>
       <p>Cakes and pastries baked to order in our home kitchen.</p>
+      <p class="footer-copy">© 2026 Annesweet. All rights reserved.</p>
     </div>
     <nav aria-label="Footer">
       <a href="menu.html">Menu</a>
@@ -99,10 +134,12 @@
       <p><a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a></p>
       <p>Pickup area: to be announced</p>
     </div>
+    <img class="footer-logo" src="photos/logo.png" alt="" width="96" height="96">
   </div>
-  <div class="wrap footer-base">
-    <p>Please order at least 3 days ahead (a week for custom cakes).</p>
-    <p>Draft photos: Unsplash. To be replaced with Annesweet's own cakes.</p>
+  <div class="wrap legal">
+    <p><a href="terms.html">Terms and conditions</a></p>
+    <p><a href="privacy.html">Privacy policy</a></p>
+    <p>Draft photos: Unsplash</p>
   </div>
 </footer>
 </body>
