@@ -19,6 +19,12 @@ function parseDate_(s) {
 function validateOrder_(order, todayStr) {
   if (!order || typeof order !== "object") return ["Invalid order."];
   const errors = [];
+  const notString = v => v != null && typeof v !== "string";
+  const c0 = order.custom && typeof order.custom === "object" ? order.custom : {};
+  const its = Array.isArray(order.items) ? order.items : [];
+  // Optional text fields must really be strings, else length limits are bypassed
+  if ([order.fbName, order.address, order.notes].some(notString) || CUSTOM_KEYS.some(k => notString(c0[k])) ||
+      its.some(i => i && (notString(i.name) || notString(i.size)))) return ["Text fields must be strings."];
   const str = v => (typeof v === "string" ? v : "");
   const tooLong = (v, max) => str(v).length > max;
 
@@ -101,12 +107,17 @@ function formatTelegramMessage_(order) {
 
 function sendTelegram_(text) {
   const p = PropertiesService.getScriptProperties();
-  const res = UrlFetchApp.fetch("https://api.telegram.org/bot" + p.getProperty("TELEGRAM_TOKEN") + "/sendMessage", {
-    method: "post",
-    contentType: "application/json",
-    payload: JSON.stringify({ chat_id: p.getProperty("TELEGRAM_CHAT_ID"), text: text }),
-    muteHttpExceptions: true,
-  });
+  let res;
+  try {
+    res = UrlFetchApp.fetch("https://api.telegram.org/bot" + p.getProperty("TELEGRAM_TOKEN") + "/sendMessage", {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({ chat_id: p.getProperty("TELEGRAM_CHAT_ID"), text: text }),
+      muteHttpExceptions: true,
+    });
+  } catch (err) {
+    throw new Error("Telegram request failed"); // original message contains the URL with the token
+  }
   // Log only the status: the request URL contains the token
   if (res.getResponseCode() !== 200) throw new Error("Telegram HTTP " + res.getResponseCode());
 }
@@ -129,6 +140,7 @@ function doPost(e) {
     let sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
+    sheet.getRange("B:K").setNumberFormat("@"); // plain text keeps 0917... and "1/2" from being converted; A stays a date
       sheet.appendRow(HEADERS);
     }
     sheet.appendRow(orderRow_(order, new Date()));
@@ -181,6 +193,12 @@ function selfCheck() {
   assert(!bad({ items: [] }), "custom only ok");
   assert(bad({ custom: { ...sample.custom, design: "x".repeat(301) } }), "long custom field");
   assert(validateOrder_(null, today).length > 0, "null order");
+  assert(bad({ notes: ["x"] }), "array notes");
+  assert(bad({ notes: ["x".repeat(100000)] }), "huge array notes");
+  assert(bad({ fbName: 5 }) && bad({ address: {} }), "non-string fbName/address");
+  assert(bad({ custom: { ...sample.custom, flavor: 5 } }), "numeric custom field");
+  assert(bad({ items: [{ ...sample.items[0], name: ["x"] }] }), "non-string item name");
+  assert(!bad({ fbName: null, notes: undefined }), "null/missing optionals ok");
   assert(safeCell_("=HYPERLINK(\"x\")") === "'=HYPERLINK(\"x\")", "formula escaped");
   assert(safeCell_("+639171234567") === "'+639171234567", "plus escaped");
   assert(safeCell_("-1") === "'-1" && safeCell_("@a") === "'@a", "minus/at escaped");
