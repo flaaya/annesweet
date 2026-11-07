@@ -10,6 +10,7 @@
   --on-ink: #FFFFFF;        /* 19.0:1 on ink */
   --ink-hover: #4A1D18;     /* white on it 13.6:1 */
   --muted: #6B5A52;         /* 5.8:1 on paper, 6.3:1 on linen */
+  --nav-hover: #A3274D;     /* nav link hover on the blush bar 5.1:1 */
   --blush: #F7D4DC;         /* "date." swatch and the nav count; ink on it 14.2:1 */
   --hair: rgba(41, 10, 8, .22);   /* resting underline (decorative) */
   --field-line: rgba(41, 10, 8, .5);   /* field and stepper edges: 3.4:1 on paper (WCAG 1.4.11 needs 3:1) */
@@ -40,6 +41,7 @@
     --ink-hover: #E4D9C2;   /* paper on it 13.0:1 */
     --muted: #C2B2A2;       /* 8.9:1 on paper, 7.8:1 on linen */
     --blush: #5C3640;       /* swatch behind parchment text 8.6:1 */
+    --nav-hover: #F7B8C9;   /* nav link hover on the plum bar 6:1 */
     --hair: rgba(246, 240, 225, .28);
     --field-line: rgba(246, 240, 225, .4); /* 3.4:1 on linen */
     --error: #F4A08F;       /* 8.7:1 on paper */
@@ -656,8 +658,6 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 .cake-detail-price { grid-column: 1; grid-row: 1; font: 400 36px/1 var(--serif-d); letter-spacing: -.02em; }
 .cake-detail-buy .size-picker { grid-column: 2; grid-row: 1; }
 .cake-add { grid-column: 1 / -1; grid-row: 2; width: 100%; min-height: 56px; background: var(--ink); color: var(--on-ink); font-size: 20px; text-align: center; }
-.cake-add:hover { background: var(--ink-hover); }
-.cake-add.in-cart, .cake-add.in-cart:hover { background: var(--blush); color: var(--ink); }
 @media (min-width: 760px) {
   .cake-detail { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s7); padding: var(--s7); }
   .cake-detail .photo { aspect-ratio: 1; }
@@ -671,6 +671,8 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 /* Scroll reveals (once) */
 .js-anim .rv { opacity: 0; translate: 0 22px; }
 .js-anim .rv.in { opacity: 1; translate: 0 0; transition: opacity .8s var(--ease) var(--d, 0ms), translate .8s var(--ease) var(--d, 0ms); }
+/* a revealed button keeps its hover fill, which the transition above would otherwise replace */
+.js-anim .btn.rv.in { transition: opacity .8s var(--ease) var(--d, 0ms), translate .8s var(--ease) var(--d, 0ms), color .4s var(--ease), background-size .4s var(--ease); }
 .js-anim .rv-photo:not(.in) { animation: none; opacity: 0; } /* not clip-path: a fully clipped box is never 'seen' by the scroll observer */
 .js-anim .rv-photo.in { animation: unveil 1.1s var(--ease) both; }
 .js-anim .hero-photo.in { animation: unveil 1.1s var(--ease) both, settle 2.2s var(--ease) both; }
@@ -681,24 +683,21 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 .wi { display: inline-block; }
 .js-anim .rv-words .wi { translate: 0 110%; }
 .js-anim .rv-words.in .wi { translate: 0 0; transition: translate .9s var(--ease) calc(var(--i, 0) * 70ms); }
-.js-anim .hero mark { background-color: transparent; background-image: linear-gradient(var(--blush), var(--blush)); background-repeat: no-repeat; background-size: 0% 100%; }
-.js-anim .hero h1.in mark { animation: swatch .9s var(--ease) 1s both; }
-@keyframes swatch { to { background-size: 100% 100%; } }
+.js-anim .hero h1:not(.marked) mark { background-color: transparent; }
 
-/* Buttons answer the pointer with a colour change only: nothing slides, lifts or shrinks */
-.btn { transition: background-color .3s ease, color .3s ease; }
-.btn:hover, .btn:focus-visible { background: var(--blush); color: var(--ink); }
-.btn:disabled:hover { background: var(--ink); color: var(--on-ink); }
-.order-btn { transition: background-size 350ms ease; }
+/* Buttons: pink fills in from left to right on hover. Only the colour moves: the text and arrow stay put,
+   and the text colour changes on the same beat as the fill. */
+.btn, .cake-add { background-image: linear-gradient(var(--blush), var(--blush)); background-repeat: no-repeat; background-position: right; background-size: 0 100%; transition: color .4s var(--ease), background-size .4s var(--ease); }
+.btn:hover, .btn:focus-visible, .cake-add:hover, .cake-add:focus-visible { background-position: left; background-size: 100% 100%; }
+.btn:hover, .btn:focus-visible, .cake-add:hover, .cake-add:focus-visible, .cake-add.in-cart:hover { color: var(--ink); }
+.btn:disabled { background-image: none; }
+.btn:disabled:hover { color: var(--on-ink); }
+.order-btn { transition: color .4s var(--ease), background-size .4s var(--ease); }
 
-/* Size switch: the new price slides up into place and the Add bar flashes the other colour, then settles */
-@keyframes priceSwap { from { opacity: 0; translate: 0 .55em; } }
-.swap { animation: priceSwap .5s var(--ease); }
-@keyframes addTint { from { background-color: var(--blush); color: var(--ink); } }
-@keyframes addTintIn { from { background-color: var(--ink); color: var(--on-ink); } }
-.order-btn.cake-add { transition: background-color .35s ease, color .35s ease; }
-.cake-add.retint { animation: addTint .8s ease; }
-.cake-add.retint.in-cart { animation-name: addTintIn; }
+/* Size switch: each digit of the new price turns over into place, one after another */
+.dg { display: inline-block; overflow: hidden; vertical-align: top; padding: .1em 0; margin: -.1em 0; }
+.dgi { display: inline-block; animation: digitTurn .5s var(--ease) both; }
+@keyframes digitTurn { from { translate: 0 105%; } }
 
 /* Photos: slow zoom inside the frame; framed photos lift */
 .photo img { transition: scale .8s var(--ease); }
@@ -708,7 +707,7 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 
 /* Small confirmations: heart and cart count pop; panels and the order bar slide in */
 @keyframes pop { 0% { scale: 1; } 40% { scale: 1.35; } 100% { scale: 1; } }
-.wish-btn[aria-pressed="true"] svg { animation: pop .5s var(--ease); }
+.wish-btn svg.beat { animation: pop .5s var(--ease); }
 .nav-count.bump { animation: pop .5s var(--ease); }
 @keyframes panelIn { from { opacity: 0; translate: 0 -10px; } to { opacity: 1; translate: 0 0; } }
 .topbar-panel:not([hidden]) { animation: panelIn .25s var(--ease); }
@@ -738,7 +737,41 @@ html:has(.cake-dialog[open]) { overflow: hidden; }
 }
 
 /* Hero: "See the menu" is as tall as the button, so its underline sits on the button's bottom edge */
-.hero .actions .text-link { align-self: stretch; display: inline-flex; align-items: center; padding-block: 0; background-origin: border-box; background-clip: border-box; }
+.hero .actions .text-link { align-self: stretch; display: inline-flex; align-items: flex-end; padding-block: 0 6px; background-origin: border-box; background-clip: border-box; }
 
 /* Home top bar: 52px logo + 8px above and below = the 68px the hero's one-screen height is calculated from */
 .page-home .topbar .wrap { padding-block: 8px; }
+
+/* Top bar: the wordmark sits a little further from the logo; on load the wordmark and nav links are wiped in from the left,
+   one after another, the same direction as the button fill. The icons just fade in. */
+.topbar-mark, .page-home .topbar-mark { gap: 14px; }
+@keyframes barWipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes barFade { from { opacity: 0; } }
+.topbar-mark, .topbar nav a { animation: barWipe .8s var(--ease) both; }
+.topbar-icons { animation: barFade .8s ease 480ms both; }
+.topbar nav a:nth-child(1) { animation-delay: 150ms; }
+.topbar nav a:nth-child(2) { animation-delay: 250ms; }
+.topbar nav a:nth-child(3) { animation-delay: 350ms; }
+.topbar nav a:nth-child(4) { animation-delay: 450ms; }
+
+/* Pink marker: one slab glides along a wavy line through the headline and lands behind "date." (see markerSweep) */
+.hero h1 { position: relative; isolation: isolate; }
+.hero-marker { position: absolute; z-index: -1; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; }
+.hero-marker path { fill: none; stroke: var(--blush); }
+
+/* Top bar links turn rosy on hover (the logo, name and icons stay as they are) */
+.topbar nav .nav-label { transition: background-size 350ms ease, color .3s var(--ease); }
+.topbar nav a:hover .nav-label, .topbar nav a:focus-visible .nav-label { color: var(--nav-hover); }
+
+/* "See the menu" links turn rosy on hover, like the top bar links */
+.text-link { transition: background-size 350ms ease, color .3s var(--ease); }
+.text-link:hover, .text-link:focus-visible { color: var(--nav-hover); }
+
+/* The Add buttons on the cake cards: no underline, just the pink fill from the left and the colour change on hover */
+.order-btn:not(.cake-add):not(.in-cart) {
+  background: linear-gradient(var(--blush), var(--blush)) right / 0 100% no-repeat;
+  transition: background-size 350ms ease, color .3s var(--ease);
+}
+.order-btn:not(.cake-add):not(.in-cart):hover, .order-btn:not(.cake-add):not(.in-cart):focus-visible {
+  background-position: left; background-size: 100% 100%; color: var(--ink);
+}

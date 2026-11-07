@@ -78,9 +78,8 @@ function makeCard(item, opts = {}) {
         radio.value = size.label;
         radio.checked = n === 0;
         radio.addEventListener("change", () => {
-          price.textContent = "₱" + size.price.toLocaleString("en-US");
+          setPrice(price, "₱" + size.price.toLocaleString("en-US"));
           btn.dataset.size = size.label;
-          replay(price, "swap");
           clearTimeout(btn._addedTimer);
           btn.classList.remove("added");
           markCartButtons(card, loadCart(cartStorage()));
@@ -674,6 +673,7 @@ function initTopbarTools(storage = wishStorage()) {
     const name = (MENU.find(m => m.id === id) || {}).name;
     if (live) live.textContent = (ids.includes(id) ? "Saved " : "Removed ") + name + (ids.includes(id) ? " to" : " from") + " your saved cakes.";
     sync();
+    if (heart.classList.contains("wish-btn")) replay(heart.querySelector("svg"), "beat"); // grows on like and on unlike
     if (heart.classList.contains("remove-btn")) wishPanel.focus(); // the button just went away
   });
   addEventListener("storage", e => { if (e.key === WISH_KEY) sync(); }); // saved in another tab
@@ -681,8 +681,21 @@ function initTopbarTools(storage = wishStorage()) {
 }
 if (document.getElementById("search-toggle")) initTopbarTools();
 
-// Restart a CSS animation class (for the price and Add flash on a size change)
-function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+// Show a new price with its digits turning over one after another, left to right (textContent stays the plain price).
+function setPrice(el, text) {
+  el.replaceChildren(...[...text].map((ch, i) => {
+    const outer = document.createElement("span");
+    const inner = document.createElement("span");
+    outer.className = "dg";
+    inner.className = "dgi";
+    inner.style.animationDelay = i * 110 + "ms";
+    inner.textContent = ch;
+    outer.appendChild(inner);
+    return outer;
+  }));
+}
+// Restart a CSS animation class
+function replay(el, cls) { el.classList.remove(cls); el.getBoundingClientRect(); el.classList.add(cls); } // the read forces a reflow; SVG elements have no offsetWidth
 
 // ---------- Cake detail window ----------
 // Optional text fields per item in menu.js: ingredients, contains (allergens), calories. A line only shows once it is filled in.
@@ -744,13 +757,11 @@ function makeCakeDetail(item) {
         radio.value = size.label;
         radio.checked = n === 0;
         radio.addEventListener("change", () => {
-          price.textContent = "₱" + size.price.toLocaleString("en-US");
+          setPrice(price, "₱" + size.price.toLocaleString("en-US"));
           add.dataset.size = size.label;
           clearTimeout(add._addedTimer);
           add.classList.remove("added");
           markCartButtons(wrap, loadCart(cartStorage()));
-          replay(price, "swap");
-          replay(add, "retint");
         });
         opt.append(radio, el("span", "", size.label));
         group.appendChild(opt);
@@ -842,6 +853,66 @@ function splitWords(el) {
   return n;
 }
 
+// The pink marker is one slab that glides along a wavy guide line through the headline: left to right on the first line,
+// round the end, right to left on the next, and so on, until it lands exactly on "date." where the real <mark> background takes over.
+// It is a thick SVG stroke whose visible part (a dash as long as "date.") slides along the path.
+function markerSweep(h1) {
+  const done = () => h1.classList.add("marked");
+  try {
+    const mark = h1.querySelector("mark");
+    const words = [...h1.querySelectorAll(".w")];
+    if (!mark || !words.length || !h1.animate) return done();
+    const base = h1.getBoundingClientRect();
+    const m = mark.getBoundingClientRect();
+    const markWord = mark.querySelector(".w").getBoundingClientRect();
+    const H = m.height, X = m.left - base.left, W = m.width;
+    const cy = m.top - base.top + H / 2;
+    const lines = [];
+    words.forEach(w => {
+      const r = w.getBoundingClientRect();
+      const last = lines[lines.length - 1];
+      if (last && Math.abs(last.top - r.top) < 4) last.right = r.right - base.left;
+      else lines.push({ top: r.top, y: cy + r.top - markWord.top, left: r.left - base.left, right: r.right - base.left });
+    });
+    // The guide line: gentle waves along each line, a tight loop at each end, close to the words,
+    // and a straight run the length of "date." at the very end so the slab lands exactly on the real <mark>.
+    const g = lines.length > 1 ? lines[1].y - lines[0].y : H;
+    const outR = Math.max(8, Math.min(28, innerWidth - base.right - 8));
+    const outL = Math.max(8, Math.min(28, base.left + lines[0].left - 8));
+    let x = lines[0].left - 10, d = "";
+    lines.forEach((l, i) => {
+      const ltr = i % 2 === 0, last = i === lines.length - 1, sx = ltr ? 1 : -1;
+      const yIn = i === 0 ? l.y + g * 0.04 : l.y - g * 0.04;
+      if (i === 0) d += `M${x} ${yIn}`;
+      if (last) {
+        const qx = ltr ? X : X + W, ex = ltr ? X + W : X;
+        d += ` C${x + (qx - x) * 0.4} ${yIn + g * 0.04} ${qx - (qx - x) * 0.3} ${l.y} ${qx} ${l.y} L${ex} ${l.y}`;
+        return;
+      }
+      const ex = ltr ? l.right : l.left, yOut = l.y + g * 0.1;
+      d += ` C${x + (ex - x) * 0.33} ${yIn + g * 0.06} ${x + (ex - x) * 0.66} ${yIn - g * 0.02} ${ex} ${yOut}`;
+      const out = ltr ? outR : outL, ny = lines[i + 1].y - g * 0.04;
+      d += ` C${ex + sx * out * 1.4} ${yOut} ${ex + sx * out * 1.4} ${ny} ${ex} ${ny}`;
+      x = ex;
+    });
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    const path = document.createElementNS(ns, "path");
+    svg.setAttribute("class", "hero-marker");
+    svg.setAttribute("aria-hidden", "true");
+    path.setAttribute("d", d);
+    path.setAttribute("stroke-width", H);
+    svg.appendChild(path);
+    h1.prepend(svg);
+    const total = path.getTotalLength();
+    path.style.strokeDasharray = `${W} ${total + W}`;
+    const anim = path.animate(
+      [{ strokeDashoffset: W }, { strokeDashoffset: -(total - W) }],
+      { duration: 4200, delay: 500, easing: "cubic-bezier(.45,0,.25,1)", fill: "both" });
+    anim.onfinish = anim.oncancel = () => { done(); svg.remove(); };
+  } catch (e) { done(); }
+}
+
 function initMotion(root = document) {
   window.__motion = true; // tells the head script the page script ran
   const html = document.documentElement;
@@ -862,6 +933,7 @@ function initMotion(root = document) {
   const io = new IntersectionObserver(entries => entries.forEach(e => {
     if (!e.isIntersecting) return;
     e.target.classList.add("in");
+    if (e.target.matches(".hero h1")) (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => markerSweep(e.target));
     io.unobserve(e.target);
   }), { threshold: 0.15, rootMargin: "0px 0px -6% 0px" });
   [...words, ...ups, ...photos].forEach(el => io.observe(el));
