@@ -148,8 +148,8 @@ test("MENU names and photos are final, not samples", () => {
   assertEqual(MENU.filter(i => /sample/i.test(i.name + i.description + i.photo)).length, 0);
   assertEqual(MENU.every(i => i.photo.startsWith("photos/real/") && i.photo.endsWith(".jpg")), true);
 });
-test("MENU has 6 cakes and 1 pastry, built from AnneSweet's real Facebook photos", () => {
-  assertEqual(MENU.filter(i => i.category === "cake").length, 6);
+test("MENU has 12 cakes and 1 pastry, built from AnneSweet's real Facebook and Pinterest photos", () => {
+  assertEqual(MENU.filter(i => i.category === "cake").length, 12);
   assertEqual(MENU.filter(i => i.category === "pastry").length, 1);
 });
 
@@ -274,8 +274,8 @@ const fakeStorage = (init = {}) => ({ data: { ...init }, getItem(k) { return k i
 const blockedStorage = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
 test("saveCart then loadCart round-trips", () => {
   const s = fakeStorage();
-  saveCart(s, { "ube-cake|8-inch": 2 });
-  assertEqual(loadCart(s), { "ube-cake|8-inch": 2 });
+  saveCart(s, { "banoffee-cheesecake|8-inch": 2 });
+  assertEqual(loadCart(s), { "banoffee-cheesecake|8-inch": 2 });
 });
 test("loadCart is empty for nothing saved, bad JSON, bad quantities or blocked storage", () => {
   assertEqual(loadCart(fakeStorage()), {});
@@ -315,15 +315,15 @@ test("restoreCart fills saved quantities and cartFromForm reads them back", () =
 test("addToOrder with no form on the page saves to the cart", () => {
   document.getElementById("lines-fixture")?.remove();
   const s = fakeStorage();
-  addToOrder("ube-cake", true, s);
-  addToOrder("ube-cake", false, s);
-  assertEqual(loadCart(s), { "ube-cake|8-inch": 1 });
+  addToOrder("banoffee-cheesecake", true, s);
+  addToOrder("banoffee-cheesecake", false, s);
+  assertEqual(loadCart(s), { "banoffee-cheesecake|8-inch": 1 });
 });
 test("addToOrder with a size saves that size", () => {
   document.getElementById("lines-fixture")?.remove();
   const s = fakeStorage();
-  addToOrder("chocolate-cake", false, s, "8-inch");
-  assertEqual(loadCart(s), { "chocolate-cake|8-inch": 1 });
+  addToOrder("mixed-chocolate-overload", false, s, "8-inch");
+  assertEqual(loadCart(s), { "mixed-chocolate-overload|8-inch": 1 });
 });
 test("order page: restores the saved cart on load and saves each quantity change", () => {
   document.getElementById("page-fixture")?.remove();
@@ -333,15 +333,15 @@ test("order page: restores the saved cart on load and saves each quantity change
   document.body.appendChild(c);
   try {
     const s = fakeStorage();
-    saveCart(s, { "ube-cake|8-inch": 3, "chocolate-cake|8-inch": 1 });
+    saveCart(s, { "banoffee-cheesecake|8-inch": 3, "mixed-chocolate-overload|8-inch": 1 });
     const form = c.firstChild;
     initOrderPage(form, s);
     const qty = (id, size) => form.querySelector('input[data-id="' + id + '"][data-size="' + size + '"]');
-    assertEqual([qty("ube-cake", "8-inch").value, qty("chocolate-cake", "8-inch").value, qty("chocolate-cake", "10-inch").value], ["3", "1", "0"]);
-    qty("ube-cake", "8-inch").parentNode.querySelector(".step:last-child").click();
-    qty("chocolate-cake", "8-inch").value = "0";
-    qty("chocolate-cake", "8-inch").dispatchEvent(new Event("input", { bubbles: true }));
-    assertEqual(loadCart(s), { "ube-cake|8-inch": 4 });
+    assertEqual([qty("banoffee-cheesecake", "8-inch").value, qty("mixed-chocolate-overload", "8-inch").value, qty("mixed-chocolate-overload", "10-inch").value], ["3", "1", "0"]);
+    qty("banoffee-cheesecake", "8-inch").parentNode.querySelector(".step:last-child").click();
+    qty("mixed-chocolate-overload", "8-inch").value = "0";
+    qty("mixed-chocolate-overload", "8-inch").dispatchEvent(new Event("input", { bubbles: true }));
+    assertEqual(loadCart(s), { "banoffee-cheesecake|8-inch": 4 });
   } finally { c.remove(); }
 });
 test("addToOrder sets 0 to 1", () => {
@@ -572,7 +572,7 @@ test("off the order page, the bar counts the saved cart", () => {
   ui.innerHTML = '<a id="order-bar" hidden></a><span id="nav-count" hidden></span>';
   document.body.appendChild(ui);
   try {
-    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"ube-cake|8-inch":2,"cupcakes|Box of 6":1}' }));
+    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"banoffee-cheesecake|8-inch":2,"pistachio-chocolate-cupcakes|Box of 6":1}' }));
     assertEqual([document.getElementById("order-bar").hidden, document.getElementById("order-bar").textContent,
       document.getElementById("nav-count").textContent], [false, "3 items · Review order", "3 items in your order"]);
     updateOrderUI(null, fakeStorage());
@@ -621,14 +621,14 @@ test("switching size updates the price, Add's size and its label", () => {
 });
 test("Add after switching writes id|selectedSize, and In your order follows the chosen size", () => {
   document.getElementById("lines-fixture")?.remove();
-  const card = makeCard(MENU.find(m => m.id === "chocolate-cake"), { picker: true });
+  const card = makeCard(MENU.find(m => m.id === "mixed-chocolate-overload"), { picker: true });
   const r = card.querySelectorAll(".size-picker input")[1];
   r.checked = true;
   r.dispatchEvent(new Event("change"));
   const add = card.querySelector(".order-btn");
   const s = fakeStorage();
   addToOrder(add.dataset.id, false, s, add.dataset.size);
-  assertEqual(loadCart(s), { "chocolate-cake|10-inch": 1 });
+  assertEqual(loadCart(s), { "mixed-chocolate-overload|10-inch": 1 });
   markCartButtons(card, loadCart(s));
   assertEqual([add.textContent, add.getAttribute("aria-label")], ["In your order", "Mixed Chocolate Overload, 10-inch in your order"]);
   add.dataset.size = "8-inch";
@@ -636,7 +636,7 @@ test("Add after switching writes id|selectedSize, and In your order follows the 
   assertEqual(add.textContent, "Add");
 });
 test("Chocolate Cake comes in 8-inch and 10-inch", () =>
-  assertEqual(MENU.find(m => m.id === "chocolate-cake").sizes, [{ label: "8-inch", price: 950 }, { label: "10-inch", price: 1250 }]));
+  assertEqual(MENU.find(m => m.id === "mixed-chocolate-overload").sizes, [{ label: "8-inch", price: 950 }, { label: "10-inch", price: 1250 }]));
 test("heart option adds a Save toggle on the photo", () => {
   const h = picked({ heart: true }).querySelector(".photo .wish-btn");
   assertEqual([h.type, h.dataset.wish, h.getAttribute("aria-label"), h.getAttribute("aria-pressed")], ["button", "t", "Save Choc", "false"]);
@@ -649,14 +649,14 @@ test("home bestsellers and the menu lists all get the picker and hearts", () => 
 });
 test("wishlist round-trips, keeps only known ids once, survives bad or blocked storage", () => {
   const s = fakeStorage();
-  saveWishlist(s, ["ube-cake", "cupcakes"]);
-  assertEqual([s.data["annesweet-wishlist"], loadWishlist(s)], ['["ube-cake","cupcakes"]', ["ube-cake", "cupcakes"]]);
-  assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": '["ube-cake","gone","ube-cake",3]' })), ["ube-cake"]);
+  saveWishlist(s, ["banoffee-cheesecake", "pistachio-chocolate-cupcakes"]);
+  assertEqual([s.data["annesweet-wishlist"], loadWishlist(s)], ['["banoffee-cheesecake","pistachio-chocolate-cupcakes"]', ["banoffee-cheesecake", "pistachio-chocolate-cupcakes"]]);
+  assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": '["banoffee-cheesecake","gone","banoffee-cheesecake",3]' })), ["banoffee-cheesecake"]);
   assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": "{oops" })), []);
   assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": '{"a":1}' })), []);
   assertEqual([loadWishlist(fakeStorage()), loadWishlist(blockedStorage), loadWishlist(null)], [[], [], []]);
-  saveWishlist(blockedStorage, ["ube-cake"]); // must not throw
-  saveWishlist(null, ["ube-cake"]);
+  saveWishlist(blockedStorage, ["banoffee-cheesecake"]); // must not throw
+  saveWishlist(null, ["banoffee-cheesecake"]);
 });
 test("toggleWish adds then removes", () => {
   assertEqual(toggleWish(["a"], "b"), ["a", "b"]);
@@ -681,7 +681,7 @@ test("searchMenu matches name or description, ignores case, needs a query, keeps
   assertEqual(searchMenu("walnut", menu).map(i => i.id), ["b"]);
   assertEqual(searchMenu("  ", menu), []);
   assertEqual(searchMenu("zzz", menu), []);
-  assertEqual(searchMenu("chocolate").map(i => i.id).includes("chocolate-cake"), true);
+  assertEqual(searchMenu("chocolate").map(i => i.id).includes("mixed-chocolate-overload"), true);
 });
 test("renderSearch links each result to its menu card and announces the count", () => {
   const ul = document.createElement("ul"), status = document.createElement("p");
@@ -698,7 +698,7 @@ test("cart link's accessible name counts the order", () => {
   ui.innerHTML = '<a id="cart-link"><span id="nav-count" hidden></span></a>';
   document.body.appendChild(ui);
   try {
-    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"ube-cake|8-inch":2}' }));
+    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"banoffee-cheesecake|8-inch":2}' }));
     assertEqual(document.getElementById("cart-link").getAttribute("aria-label"), "Your order, 2 items");
   } finally { ui.remove(); }
 });
