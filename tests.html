@@ -146,11 +146,11 @@ test("renderMenu skips lists the page doesn't have", () => {
 });
 test("MENU names and photos are final, not samples", () => {
   assertEqual(MENU.filter(i => /sample/i.test(i.name + i.description + i.photo)).length, 0);
-  assertEqual(MENU.every(i => i.photo === "photos/draft/" + i.id + ".jpg"), true);
+  assertEqual(MENU.every(i => i.photo.startsWith("photos/real/") && i.photo.endsWith(".jpg")), true);
 });
-test("MENU has 10 cakes and 4 pastries", () => {
-  assertEqual(MENU.filter(i => i.category === "cake").length, 10);
-  assertEqual(MENU.filter(i => i.category === "pastry").length, 4);
+test("MENU has 6 cakes and 1 pastry, built from AnneSweet's real Facebook photos", () => {
+  assertEqual(MENU.filter(i => i.category === "cake").length, 6);
+  assertEqual(MENU.filter(i => i.category === "pastry").length, 1);
 });
 
 const today = new Date("2026-11-07T04:00:00Z"); // noon Nov 7 in Manila, whatever the browser's timezone
@@ -572,7 +572,7 @@ test("off the order page, the bar counts the saved cart", () => {
   ui.innerHTML = '<a id="order-bar" hidden></a><span id="nav-count" hidden></span>';
   document.body.appendChild(ui);
   try {
-    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"ube-cake|8-inch":2,"brownies|Box of 6":1}' }));
+    updateOrderUI(null, fakeStorage({ "annesweet-cart": '{"ube-cake|8-inch":2,"cupcakes|Box of 6":1}' }));
     assertEqual([document.getElementById("order-bar").hidden, document.getElementById("order-bar").textContent,
       document.getElementById("nav-count").textContent], [false, "3 items · Review order", "3 items in your order"]);
     updateOrderUI(null, fakeStorage());
@@ -630,7 +630,7 @@ test("Add after switching writes id|selectedSize, and In your order follows the 
   addToOrder(add.dataset.id, false, s, add.dataset.size);
   assertEqual(loadCart(s), { "chocolate-cake|10-inch": 1 });
   markCartButtons(card, loadCart(s));
-  assertEqual([add.textContent, add.getAttribute("aria-label")], ["In your order", "Chocolate Cake, 10-inch in your order"]);
+  assertEqual([add.textContent, add.getAttribute("aria-label")], ["In your order", "Mixed Chocolate Overload, 10-inch in your order"]);
   add.dataset.size = "8-inch";
   markCartButtons(card, loadCart(s));
   assertEqual(add.textContent, "Add");
@@ -649,8 +649,8 @@ test("home bestsellers and the menu lists all get the picker and hearts", () => 
 });
 test("wishlist round-trips, keeps only known ids once, survives bad or blocked storage", () => {
   const s = fakeStorage();
-  saveWishlist(s, ["ube-cake", "cookies"]);
-  assertEqual([s.data["annesweet-wishlist"], loadWishlist(s)], ['["ube-cake","cookies"]', ["ube-cake", "cookies"]]);
+  saveWishlist(s, ["ube-cake", "cupcakes"]);
+  assertEqual([s.data["annesweet-wishlist"], loadWishlist(s)], ['["ube-cake","cupcakes"]', ["ube-cake", "cupcakes"]]);
   assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": '["ube-cake","gone","ube-cake",3]' })), ["ube-cake"]);
   assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": "{oops" })), []);
   assertEqual(loadWishlist(fakeStorage({ "annesweet-wishlist": '{"a":1}' })), []);

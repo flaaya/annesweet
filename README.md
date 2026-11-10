@@ -34,24 +34,17 @@ Open each file in any text editor. Use "find" (Ctrl+F or Cmd+F) to locate the te
 | Every page | `Contact: 09XX XXX XXXX` (bottom, in the footer) | The real contact number |
 | Every page | `<a href="https://facebook.com/" ...>Facebook</a>` (footer) | The same Facebook link as in `script.js` |
 | Every page | `Pickup area: to be announced` (footer) | The real pickup area |
-| `menu.js` | Each item's `description` and prices | Check the wording and prices are right |
-| `photos/draft/` | Every `.jpg` | Real photos of Annesweet's cakes (see below) |
-| Every page | `Draft photos: Unsplash` (footer) | Delete this line once the real photos are in |
+| `menu.js` | The 6 cake names, descriptions and every price (8-inch and 10-inch), plus the one pastry | Confirm these against the real menu (there's an `OWNER:` note at the top of the file with details) |
 | `photos/logo.png`, `photos/favicon.png`, `photos/apple-touch-icon.png` | The Annesweet logo (a circular crop of the AnneSweet badge: chef, ribbon, "Bespoke cakes and cupcakes") and the small browser-tab icon made from it | A larger or cleaner file of the logo if you have one: save it with the **same names** (logo 240x240 or bigger, favicon 64x64, apple-touch-icon 180x180) |
-| `menu.js` | Every cake's `10-inch` price (the 8-inch price is the old single price; each 10-inch price is about 30% more, rounded, and is a draft) | The real 10-inch prices. Pastries stay as a box of 6 |
 | `terms.html` | Each `<!-- OWNER: confirm ... -->` note | Decide the deposit/payment rule, the cancellation and refund policy, and what to say about allergens; rewrite the sentence under each note, then delete the note |
 | `care.html` | Each `<!-- OWNER: confirm ... -->` note | Cake care and pickup page: confirm the pickup days, hours and meeting spot, the arrival steps, and the storage advice (fridge time, serve time, how many days); edit the text, then delete the note |
 | `privacy.html` | `<!-- OWNER: confirm the site is hosted on GitHub Pages -->` | Keep the sentence if the site is on GitHub Pages; change the host name if not |
 
 The colors are set at the top of `style.css`: `--paper` (the cream page), `--linen` (photo plates), `--ink: #290A08` (text and the dark button) and `--blush` (the one pink touch). The dark-mode versions sit just below them.
 
-**Photos.** The pictures in `photos/draft/` are free stand-ins from Unsplash (listed in `photos/draft/SOURCES.txt`), not Annesweet's cakes. Replace each one with a real photo **using the same file name**, and nothing else needs changing:
-- `hero.jpg`: the big picture on Home (shown landscape on phones, square on computers)
-- one per menu item, named after the item's `id` (`chocolate-cake.jpg`, `ube-cake.jpg`, ... `cupcakes.jpg`)
-- `custom.jpg` (custom cakes), `kitchen.jpg` and `cake-box.jpg` (how ordering works)
-- `custom-1.jpg` to `custom-4.jpg`: the "Ideas for your custom cake" page, `ideas.html` (portrait, 4:5). Also change the captions and `alt` text in `ideas.html` to match. Real Annesweet custom cakes are best here
+**Photos.** `photos/real/` holds real AnneSweet photos pulled from facebook.com/annesweetph (hero, the 6 cakes, the one pastry, and a few extra shots used on the home page and `ideas.html`). The old `photos/draft/` stock photos are no longer referenced by any page; the folder is left in place in case anything in it is still useful, but nothing needs it.
 
-Photo tips: square (except the hero, about 4:3), under about 200 KB each (shrink them free at squoosh.app), no text on them, and shot the same way (same angle, plain light background, daylight). When they're all real, you can rename the folder from `photos/draft/` to `photos/`, but then every `photos/draft/` in `menu.js` and the four pages must change too, so it's simpler to leave it.
+To swap in a better or newer photo later, replace the file in `photos/real/` **using the same file name** — nothing else needs changing. To add a cake that doesn't have a photo yet, take one the same way as the others (plain light background, daylight, no text on the cake itself if you can help it), keep it under about 200 KB (shrink free at squoosh.app), and add it as a new file in `photos/real/`.
 
 ## Step 1. Telegram bot (so Mom gets alerts)
 
