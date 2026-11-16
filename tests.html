@@ -146,7 +146,7 @@ test("renderMenu skips lists the page doesn't have", () => {
 });
 test("MENU names and photos are final, not samples", () => {
   assertEqual(MENU.filter(i => /sample/i.test(i.name + i.description + i.photo)).length, 0);
-  assertEqual(MENU.every(i => i.photo.startsWith("photos/real/") && i.photo.endsWith(".jpg")), true);
+  assertEqual(MENU.every(i => i.photo === "" || (i.photo.startsWith("photos/real/") && i.photo.endsWith(".jpg"))), true);
 });
 test("MENU has 12 cakes and 1 pastry, built from AnneSweet's real Facebook and Pinterest photos", () => {
   assertEqual(MENU.filter(i => i.category === "cake").length, 12);

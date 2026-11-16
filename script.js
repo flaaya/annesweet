@@ -23,7 +23,8 @@ function makeCard(item, opts = {}) {
   const card = el("article", "card" + (item.soldOut ? " sold-out" : "") + (multi && !picker ? " multi" : "") + (picker ? " picker" : ""));
   card.id = "item-" + item.id; // search results link to menu.html#item-<id>
   const photo = el("div", "photo");
-  photo.appendChild(productImg(item, item.name));
+  const cardImg = productImg(item, item.name);
+  if (cardImg) photo.appendChild(cardImg);
   if (opts.heart) {
     const heart = el("button", "wish-btn");
     heart.type = "button";
@@ -98,6 +99,7 @@ const HEART_SVG = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="
 
 // Square product photo; the id lets style.css re-frame stand-in photos whose cake sits small or low
 function productImg(item, alt) {
+  if (!item.photo) return null; // no real photo yet — leave the placeholder background showing
   const img = document.createElement("img");
   img.src = item.photo;
   img.alt = alt;
@@ -199,7 +201,8 @@ function renderOrderLines(menu, container) {
     items.forEach(item => {
       const row = el("div", "order-item");
       const photo = el("div", "photo");
-      photo.appendChild(productImg(item, ""));
+      const orderImg = productImg(item, "");
+      if (orderImg) photo.appendChild(orderImg);
       const sizes = el("div", "sizes");
       item.sizes.forEach((size, n) => {
         const line = el("div", "order-line");
@@ -669,7 +672,8 @@ function miniItem(item, tag, href) {
   if (href) row.href = href;
   const photo = document.createElement("div");
   photo.className = "photo";
-  photo.appendChild(productImg(item, ""));
+  const miniImg = productImg(item, "");
+  if (miniImg) photo.appendChild(miniImg);
   const name = document.createElement("span");
   name.className = "mini-name";
   name.textContent = item.name;
@@ -827,8 +831,10 @@ function makeCakeDetail(item) {
   const wrap = el("div", "cake-detail");
   const photo = el("div", "photo");
   const img = productImg(item, item.name);
-  img.loading = "eager";
-  photo.appendChild(img);
+  if (img) {
+    img.loading = "eager";
+    photo.appendChild(img);
+  }
   const body = el("div", "cake-detail-body");
   const h2 = el("h2", "", item.name);
   h2.id = "cake-detail-title";

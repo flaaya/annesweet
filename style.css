@@ -148,6 +148,7 @@ h1 em { font-style: italic; }
 .hero .lead { order: 2; margin: var(--s6) auto 0; }
 .hero .actions { order: 3; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--s4) var(--s6); margin-top: 40px; }
 .hero-plate { overflow: hidden; order: 4; margin-top: clamp(48px, 7vw, 96px); background: var(--linen); padding: clamp(16px, 4vw, 48px); }
+.hero-plate:empty, .duo-photo:empty { aspect-ratio: 4 / 5; }
 .hero-photo { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: 30% 50%; }
 .trust { order: 5; margin-top: var(--s5); text-align: left; font: italic 400 clamp(30px, 3.6vw, 48px)/1.1 var(--serif-d); letter-spacing: -.02em; }
 @media (min-width: 600px) and (max-width: 959px) {
